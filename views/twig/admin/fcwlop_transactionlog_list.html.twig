@@ -1,0 +1,219 @@
+{% include "headitem.html.twig" with {title: "SYSREQ_MAIN_TITLE"|translate, box: "list"} %}
+{% set where = oView.getListFilter() %}
+
+{% if readonly %}
+    {% set readonly = "readonly disabled" %}
+    {% else %}
+    {% set readonly = "" %}
+    {% endif %}
+
+<!--suppress Annotator -->
+<script type="text/javascript">
+    window.onload = function () {
+        top.reloadEditFrame();
+        {% if updatelist == 1 %}
+        top.oxid.admin.updateList('{{  oxid  }}');
+        {% endif %}
+    }
+</script>
+
+<div id="liste">
+    <form autocomplete="off" name="search" id="search" action="{{  oViewConf.getSelfLink()|raw  }}" method="post">
+        {% include "_formparams.html.twig" with {'cl': 'FcwlopTransactionLogList', 'lstrt': lstrt, 'actedit': actedit, 'oxid': oxid, 'language': actlang, 'editlanguage':actlang } %}
+        <table cellspacing="0" cellpadding="0" border="0" width="100%">
+            <colgroup>
+                <col width="12.5%">
+                <col width="12.5%">
+                <col width="12.5%">
+                <col width="12.5%">
+                <col width="12.5%">
+                <col width="12.5%">
+                <col width="12.5%">
+                <col width="11.5%">
+                <col width="1%">
+            </colgroup>
+            <tr class="listitem">
+                <td valign="top" class="listfilter">
+                    <div class="r1">
+                        <div class="b1">
+                            <input class="listedit" type="text" size="30" maxlength="128"
+                                   name="{{ oView.fcwlopGetInputName('fcwloptransactionlog', 'fcwlop_time') }}"
+                                   value="{{ oView.fcwlopGetWhereValue('fcwloptransactionlog', 'fcwlop_time') }}">
+                        </div>
+                    </div>
+                </td>
+                <td valign="top" class="listfilter">
+                    <div class="r1">
+                        <div class="b1">
+                            <input class="listedit" type="text" size="30" maxlength="128"
+                                   name="{{ oView.fcwlopGetInputName('fcwloptransactionlog', 'fcwlop_ordernr') }}"
+                                   value="{{ oView.fcwlopGetWhereValue('fcwloptransactionlog', 'fcwlop_ordernr') }}">
+                        </div>
+                    </div>
+                </td>
+                <td valign="top" class="listfilter">
+                    <div class="r1">
+                        <div class="b1">
+                            <input class="listedit" type="text" size="30" maxlength="128"
+                                   name="{{ oView.fcwlopGetInputName('fcwloptransactionlog', 'fcwlop_txid') }}"
+                                   value="{{ oView.fcwlopGetWhereValue('fcwloptransactionlog', 'fcwlop_txid') }}">
+                        </div>
+                    </div>
+                </td>
+                <td valign="top" class="listfilter">
+                    <div class="r1">
+                        <div class="b1">
+                            <input class="listedit" type="text" size="30" maxlength="128"
+                                   name="{{ oView.fcwlopGetInputName('fcwloptransactionlog', 'fcwlop_type') }}"
+                                   value="{{ oView.fcwlopGetWhereValue('fcwloptransactionlog', 'fcwlop_type') }}">
+                        </div>
+                    </div>
+                </td>
+                <td valign="top" class="listfilter">
+                    <div class="r1">
+                        <div class="b1">
+                            <input class="listedit" type="text" size="30" maxlength="128"
+                                   name="{{ oView.fcwlopGetInputName('fcwloptransactionlog', 'fcwlop_price') }}"
+                                   value="{{ oView.fcwlopGetWhereValue('fcwloptransactionlog', 'fcwlop_price') }}">
+                        </div>
+                    </div>
+                </td>
+                <td valign="top" class="listfilter">
+                    <div class="r1">
+                        <div class="b1">
+                            <input class="listedit" type="text" size="30" maxlength="128"
+                                   name="{{ oView.fcwlopGetInputName('fcwloptransactionlog', 'fcwlop_status') }}"
+                                   value="{{ oView.fcwlopGetWhereValue('fcwloptransactionlog', 'fcwlop_status') }}">
+                        </div>
+                    </div>
+                </td>
+                <td valign="top" class="listfilter">
+                    <div class="r1">
+                        <div class="b1">
+                            <input class="listedit" type="text" size="30" maxlength="128"
+                                   name="{{ oView.fcwlopGetInputName('fcwloptransactionlog', 'fcwlop_status_code') }}"
+                                   value="{{ oView.fcwlopGetWhereValue('fcwloptransactionlog', 'fcwlop_status_code') }}">
+                        </div>
+                    </div>
+                </td>
+                <td valign="top" class="listfilter" colspan="2" nowrap>
+                    <div class="r1">
+                        <div class="b1">
+                            <div class="find">
+                                <input class="listedit" type="submit" name="submitit"
+                                       value="{{ translate({ ident: "GENERAL_SEARCH" }) }}">
+                            </div>
+                            <input class="listedit" type="text" size="30" maxlength="128"
+                                   name="{{ oView.fcwlopGetInputName('fcwloptransactionlog', 'timestamp') }}"
+                                   value="{{ oView.fcwlopGetWhereValue('fcwloptransactionlog', 'timestamp') }}">
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="listheader first" height="15">&nbsp;<a
+                            href="{{ oView.fcwlopGetSortingJavascript('fcwloptransactionlog', 'fcwlop_time') }}"
+                            class="listheader">{{ translate({ ident: "FCWLOP_LIST_HEADER_TXTIME" }) }}</a></td>
+                <td class="listheader"><a
+                            href="{{ oView.fcwlopGetSortingJavascript('fcwloptransactionlog', 'fcwlop_ordernr') }}"
+                            class="listheader">{{ translate({ ident: "FCWLOP_LIST_HEADER_ORDERNR" }) }}</a></td>
+                <td class="listheader"><a
+                            href="{{ oView.fcwlopGetSortingJavascript('fcwloptransactionlog', 'fcwlop_txid') }}"
+                            class="listheader">{{ translate({ ident: "FCWLOP_LIST_HEADER_TXID" }) }}</a></td>
+                <td class="listheader"><a
+                            href="{{ oView.fcwlopGetSortingJavascript('fcwloptransactionlog', 'fcwlop_type') }}"
+                            class="listheader">{{ translate({ ident: "FCWLOP_LIST_HEADER_TYPE" }) }}</a></td>
+                <td class="listheader"><a
+                            href="{{ oView.fcwlopGetSortingJavascript('fcwloptransactionlog', 'fcwlop_price') }}"
+                            class="listheader">{{ translate({ ident: "FCWLOP_LIST_HEADER_PRICE" }) }}</a></td>
+                <td class="listheader"><a
+                            href="{{ oView.fcwlopGetSortingJavascript('fcwloptransactionlog', 'fcwlop_status') }}"
+                            class="listheader">{{ translate({ ident: "FCWLOP_LIST_HEADER_STATUS" }) }}</a></td>
+                <td class="listheader"><a
+                            href="{{ oView.fcwlopGetSortingJavascript('fcwloptransactionlog', 'fcwlop_status_code') }}"
+                            class="listheader">{{ translate({ ident: "FCWLOP_LIST_HEADER_STATUSCODE" }) }}</a></td>
+                <td class="listheader" colspan="2"><a
+                            href="{{ oView.fcwlopGetSortingJavascript('fcwloptransactionlog', 'timestamp') }}"
+                            class="listheader">{{ translate({ ident: "FCWLOP_LIST_HEADER_TIMESTAMP" }) }}</a></td>
+            </tr>
+
+            {% set blWhite = "" %}
+            {% set _cnt = 0 %}
+            {% for listitem in mylist %}
+            {% set _cnt = _cnt+1 %}
+            <tr id="row.{{ _cnt }}">
+                {% if listitem.blacklist == 1 %}
+                {% set listclass = "listitem3" %}
+                {% else %}
+                 {% set listclass = 'listitem' ~ blWhite %}
+                {% endif %}
+                {% if listitem.getId() == oxid  %}
+                {% set listclass = "listitem4" %}
+                {% endif %}
+                <td valign="top" class="{{  listclass }}" height="15">
+                    <div class="listitemfloating"><a
+                                href="Javascript:top.oxid.admin.editThis('{{  listitem.fcwloptransactionlog__oxid.value|raw }}');"
+                                class="{{  listclass }}">{{  listitem.fcwloptransactionlog__fcwlop_time.value|raw }}</a></div>
+                </td>
+                <td valign="top" class="{{  listclass }}">
+                    <div class="listitemfloating"><a
+                                href="Javascript:top.oxid.admin.editThis('{{  listitem.fcwloptransactionlog__oxid.value|raw }}');"
+                                class="{{  listclass }}">{{  listitem.fcwloptransactionlog__fcwlop_ordernr.value|raw }}</a></div>
+                </td>
+                <td valign="top" class="{{  listclass }}">
+                    <div class="listitemfloating"><a
+                                href="Javascript:top.oxid.admin.editThis('{{  listitem.fcwloptransactionlog__oxid.value|raw }}');"
+                                class="{{  listclass }}">{{  listitem.fcwloptransactionlog__fcwlop_txid.value|raw }}</a></div>
+                </td>
+                <td valign="top" class="{{  listclass }}">
+                    <div class="listitemfloating"><a
+                                href="Javascript:top.oxid.admin.editThis('{{  listitem.fcwloptransactionlog__oxid.value|raw }}');"
+                                class="{{  listclass }}">{{  listitem.fcwloptransactionlog__fcwlop_type.value|raw }}</a></div>
+                </td>
+                <td valign="top" class="{{  listclass }}">
+                    <div class="listitemfloating"><a
+                                href="Javascript:top.oxid.admin.editThis('{{  listitem.fcwloptransactionlog__oxid.value|raw }}');"
+                                class="{{  listclass }}">{{  listitem.fcwloptransactionlog__fcwlop_price.value|raw }}</a></div>
+                </td>
+                <td valign="top" class="{{  listclass }}">
+                    <div class="listitemfloating"><a
+                                href="Javascript:top.oxid.admin.editThis('{{  listitem.fcwloptransactionlog__oxid.value|raw }}');"
+                                class="{{  listclass }}">{{  listitem.fcwloptransactionlog__fcwlop_status.value|raw }}</a></div>
+                </td>
+                <td valign="top" class="{{  listclass }}">
+                    <div class="listitemfloating"><a
+                                href="Javascript:top.oxid.admin.editThis('{{  listitem.fcwloptransactionlog__oxid.value|raw }}');"
+                                class="{{  listclass }}">{{  listitem.fcwloptransactionlog__fcwlop_status_code.value|raw }}</a></div>
+                </td>
+                <td valign="top" class="{{  listclass }}">
+                    <div class="listitemfloating">&nbsp;<a
+                                href="Javascript:top.oxid.admin.editThis('{{  listitem.fcwloptransactionlog__oxid.value|raw }}');"
+                                class="{{  listclass }}">{{  listitem.fcwloptransactionlog__timestamp.value|raw }}</a></div>
+                </td>
+                <td class="{{  listclass }}"></td>
+            </tr>
+            {% if blWhite == "2" %}
+            {% set blWhite = "" %}
+            {% else %}
+            {% set blWhite = "2" %}
+            {% endif %}
+            {% endfor %}
+            {% include "pagenavisnippet.html.twig" with {colspan: "8"} %}
+        </table>
+    </form>
+</div>
+
+{% include "pagetabsnippet.html.twig" %}
+
+
+<script type="text/javascript">
+    if (parent.parent) {
+        parent.parent.sShopTitle = "{{ actshopobj.oxshops__oxname.getRawValue()|addslashes }}";
+        parent.parent.sMenuItem = "{{ translate({ ident: "fcwlop_admin_protocol" }) }}";
+        parent.parent.sMenuSubItem = "{{ translate({ ident: "fcwlop_admin_transaction_logs" }) }}";
+        parent.parent.sWorkArea = "{{ _act }}";
+        parent.parent.setTitle();
+    }
+</script>
+</body>
+</html>

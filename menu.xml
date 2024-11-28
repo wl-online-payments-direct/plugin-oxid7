@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<OX>
+    <OXMENU id="NAVIGATION_ESHOPADMIN">
+        <MAINMENU id="mxorders">
+            <SUBMENU id="mxdisplayorders" cl="admin_order" list="order_list">
+                <TAB id="fcwlop_order_title" cl="FcwlopOrderDetails" />
+            </SUBMENU>
+        </MAINMENU>
+        <MAINMENU id="fcwlop_admin_protocol">
+            <SUBMENU id="fcwlop_admin_transaction_logs" cl="FcwlopTransactionLogMain" list="FcwlopTransactionLogList">
+                <TAB id="fcwlop_admin_transaction_logs" cl="FcwlopTransactionLog" />
+            </SUBMENU>
+            <SUBMENU id="fcwlop_admin_request_logs" cl="FcwlopRequestLogMain" list="FcwlopRequestLogList">
+                <TAB id="fcwlop_admin_request_logs" cl="FcwlopRequestLog" />
+            </SUBMENU>
+            <SUBMENU id="mxdisplayorders" cl="admin_order" list="order_list"></SUBMENU>
+        </MAINMENU>
+    </OXMENU>
+</OX>

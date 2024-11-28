@@ -1,0 +1,161 @@
+{% include "headitem.html.twig" with {title: "SYSREQ_MAIN_TITLE"|translate, box: "list"} %}
+{% set where = oView.getListFilter() %}
+
+{% if readonly %}
+    {% set readonly = "readonly disabled" %}
+    {% else %}
+    {% set readonly = "" %}
+    {% endif %}
+
+<!--suppress Annotator -->
+<script type="text/javascript">
+    window.onload = function () {
+        top.reloadEditFrame();
+        {% if updatelist == 1 %}
+        top.oxid.admin.updateList('{{  oxid  }}');
+        {% endif %}
+    }
+</script>
+
+<div id="liste">
+    <form autocomplete="off" name="search" id="search" action="{{  oViewConf.getSelfLink()|raw  }}" method="post">
+        {% include "_formparams.html.twig" with {'cl': 'FcwlopRequestLogList', 'lstrt': lstrt, 'actedit': actedit, 'oxid': oxid, 'language': actlang, 'editlanguage':actlang } %}
+        <table cellspacing="0" cellpadding="0" border="0" width="100%">
+            <colgroup>
+                <col width="20%">
+                <col width="10%">
+                <col width="20%">
+                <col width="25%">
+                <col width="24%">
+                <col width="1%">
+            </colgroup>
+            <tr class="listitem">
+                <td valign="top" class="listfilter">
+                    <div class="r1">
+                        <div class="b1">
+                            <input class="listedit" type="text" size="30" maxlength="128"
+                                   name="{{ oView.fcwlopGetInputName('fcwloprequestlog', 'timestamp') }}"
+                                   value="{{ oView.fcwlopGetWhereValue('fcwloprequestlog', 'timestamp') }}">
+                        </div>
+                    </div>
+                </td>
+                <td valign="top" class="listfilter">
+                    <div class="r1">
+                        <div class="b1">
+                            &nbsp;
+                        </div>
+                    </div>
+                </td>
+                <td valign="top" class="listfilter">
+                    <div class="r1">
+                        <div class="b1">
+                            <input class="listedit" type="text" size="30" maxlength="128"
+                                   name="{{ oView.fcwlopGetInputName('fcwloprequestlog', 'ordernr') }}"
+                                   value="{{ oView.fcwlopGetWhereValue('fcwloprequestlog', 'ordernr') }}">
+                        </div>
+                    </div>
+                </td>
+                <td valign="top" class="listfilter">
+                    <div class="r1">
+                        <div class="b1">
+                            <input class="listedit" type="text" size="30" maxlength="128"
+                                   name="{{ oView.fcwlopGetInputName('fcwloprequestlog', 'request') }}"
+                                   value="{{ oView.fcwlopGetWhereValue('fcwloprequestlog', 'request') }}"><br>
+                        </div>
+                    </div>
+                </td>
+                <td valign="top" class="listfilter" colspan="2" nowrap>
+                    <div class="r1">
+                        <div class="b1">
+                            <div class="find">
+                                <input class="listedit" type="submit" name="submitit"
+                                       value="{{ translate({ ident: "GENERAL_SEARCH" }) }}">
+                            </div>
+                            <input class="listedit" type="text" size="30" maxlength="128"
+                                   name="{{ oView.fcwlopGetInputName('fcwloprequestlog', 'response') }}"
+                                   value="{{ oView.fcwlopGetWhereValue('fcwloprequestlog', 'response') }}">
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="listheader first" height="15">&nbsp;<a
+                            href="{{ oView.fcwlopGetSortingJavascript('fcwloprequestlog', 'timestamp') }}"
+                            class="listheader">{{ translate({ ident: "FCWLOP_LIST_HEADER_TIMESTAMP" }) }}</a></td>
+                <td class="listheader">{{ translate({ ident: "FCWLOP_LIST_HEADER_CHANNEL" }) }}</td>
+                <td class="listheader">{{ translate({ ident: "FCWLOP_LIST_HEADER_ORDERNR" }) }}</td>
+                <td class="listheader"><a
+                            href="{{ oView.fcwlopGetSortingJavascript('fcwloprequestlog', 'requesttype') }}"
+                            class="listheader">{{ translate({ ident: "FCWLOP_LIST_HEADER_REQUEST" }) }}</a></td>
+                <td class="listheader" colspan="2"><a
+                            href="{{ oView.fcwlopGetSortingJavascript('fcwloprequestlog', 'responsestatus') }}"
+                            class="listheader">{{ translate({ ident: "FCWLOP_LIST_HEADER_RESPONSE" }) }}</a></td>
+            </tr>
+
+            {% set blWhite = "" %}
+            {% set _cnt = 0 %}
+            {% for listitem in mylist %}
+            {% set _cnt = _cnt+1 %}
+            <tr id="row.{{ _cnt }}">
+                {% if listitem.blacklist == 1 %}
+                {% set listclass = "listitem3" %}
+                {% else %}
+                 {% set listclass = 'listitem' ~ blWhite %}
+                {% endif %}
+                {% if listitem.getId() == oxid  %}
+                {% set listclass = "listitem4" %}
+                {% endif %}
+                <td valign="top" class="{{  listclass }}" height="15">
+                    <div class="listitemfloating">&nbsp;<a
+                                href="Javascript:top.oxid.admin.editThis('{{  listitem.fcwloprequestlog__oxid.value|raw }}');"
+                                class="{{  listclass }}">{{  listitem.fcwloprequestlog__timestamp.value|raw }}</a></div>
+                </td>
+                <td valign="top" class="{{  listclass }}">
+                    <div class="listitemfloating"><a
+                                href="Javascript:top.oxid.admin.editThis('{{  listitem.fcwloprequestlog__oxid.value|raw }}');"
+                                class="{{  listclass }}">Serverapi</a></div>
+                </td>
+                <td valign="top" class="{{  listclass }}">
+                    <div class="listitemfloating"><a
+                                href="Javascript:top.oxid.admin.editThis('{{  listitem.fcwloprequestlog__oxid.value|raw }}');"
+                                class="{{  listclass }}">{{  listitem.fcwloprequestlog__ordernr.value|raw }}</a></div>
+                </td>
+                <td valign="top" class="{{  listclass }}">
+                    <div class="listitemfloating"><a
+                                href="Javascript:top.oxid.admin.editThis('{{  listitem.fcwloprequestlog__oxid.value|raw }}');"
+                                class="{{  listclass }}">{{  listitem.fcwloprequestlog__requesttype.value|raw }}</a>
+                    </div>
+                </td>
+                <td valign="top" class="{{  listclass }}">
+                    <div class="listitemfloating"><a
+                                href="Javascript:top.oxid.admin.editThis('{{  listitem.fcwloprequestlog__oxid.value|raw }}');"
+                                class="{{  listclass }}">{{  listitem.fcwloprequestlog__responsestatus.value|raw }}</a>
+                    </div>
+                </td>
+                <td class="{{  listclass }}"></td>
+            </tr>
+            {% if blWhite == "2" %}
+            {% set blWhite = "" %}
+            {% else %}
+            {% set blWhite = "2" %}
+            {% endif %}
+            {% endfor %}
+            {% include "pagenavisnippet.html.twig" with {colspan: "8"} %}
+        </table>
+    </form>
+</div>
+
+{% include "pagetabsnippet.html.twig" %}
+
+
+<script type="text/javascript">
+    if (parent.parent) {
+        parent.parent.sShopTitle = "{{ actshopobj.oxshops__oxname.getRawValue()|addslashes }}";
+        parent.parent.sMenuItem = "{{ translate({ ident: "fcwlop_admin_protocol" }) }}";
+        parent.parent.sMenuSubItem = "{{ translate({ ident: "fcwlop_admin_request_logs" }) }}";
+        parent.parent.sWorkArea = "{{ _act }}";
+        parent.parent.setTitle();
+    }
+</script>
+</body>
+</html>

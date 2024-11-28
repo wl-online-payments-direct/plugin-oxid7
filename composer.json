@@ -1,0 +1,26 @@
+{
+  "name": "fatchip-gmbh/fcwlop",
+  "description": "Worldline Online Payment direct",
+  "type": "oxideshop-module",
+  "keywords": [
+    "oxid",
+    "modules",
+    "eShop",
+    "payment"
+  ],
+  "homepage": "https://worldline.com/",
+  "version": "1.0.1",
+  "license": [
+    "LGPL-3.0-only"
+  ],
+  "extra": {
+    "oxideshop": {
+      "target-directory": "fc/fcwlop"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "FC\\FCWLOP\\": "./"
+    }
+  }
+}

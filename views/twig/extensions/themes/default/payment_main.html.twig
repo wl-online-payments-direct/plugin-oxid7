@@ -1,0 +1,12 @@
+{% extends "payment_main.html.twig" %}
+
+{% block admin_payment_main_form %}
+    {% if edit is not null and edit.fcwlopIsWorldlinePaymentMethod() == 1 %}
+        <tr>
+            <td class="edittext" colspan="2">
+                <b>{{ translate({ ident: "FCWLOP_IS_WORLDLINE" }) }}</b>
+            </td>
+        </tr>
+    {% endif %}
+    {{ parent() }}
+{% endblock %}

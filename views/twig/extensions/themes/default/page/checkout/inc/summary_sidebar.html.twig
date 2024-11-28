@@ -1,0 +1,21 @@
+{% extends "page/checkout/inc/summary_sidebar.html.twig" %}
+
+{% block basket_btn_next_bottom %}
+    {{ parent() }}
+    {{ script({ include: oViewConf.getModuleUrl('fcwlop','js/fcwlop.js'), dynamic: __oxid_include_dynamic }) }}
+
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function(e) {
+            var paymentForm = document.getElementById('payment');
+            if (paymentForm) {
+                const fcwlopPaymentNextButton = document.querySelector(".sticky-md-top button");
+                if (fcwlopPaymentNextButton) {
+                    fcwlopPaymentNextButton.onclick = function (e) {
+                        e.preventDefault();
+                        fcwlopSubmitPaymentForm(paymentForm);
+                    }
+                }
+            }
+        })
+    </script>
+{% endblock %}

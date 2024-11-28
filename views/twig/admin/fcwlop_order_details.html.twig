@@ -1,0 +1,622 @@
+{% include "headitem.html.twig" with {title: "GENERAL_ADMIN_TITLE"|translate} %}
+
+{% set order = oView.getOrder() %}
+{% set oOrderarticles = edit.getOrderArticles() %}
+{% set paymentType = order.getPaymentType() %}
+{% set captureMode = oView.fcwlopGetCaptureMode() %}
+
+{{ script({ include: oViewConf.getModuleUrl("fcwlop", "js/fcwlop.js"), dynamic: __oxid_include_dynamic }) }}
+
+{% if readonly %}
+    {% set readonly = "readonly disabled" %}
+{% else %}
+    {% set readonly = "" %}
+{% endif %}
+
+<form name="transfer" id="transfer" action="{{ oViewConf.getSelfLink()|raw }}" method="post">
+    {{ oViewConf.getHiddenSid()|raw }}
+    <input type="hidden" name="oxid" value="{{ oxid }}">
+    <input type="hidden" name="cl" value="FcwlopOrderDetails">
+</form>
+
+{% if oView.fcwlopIsWorldlineOrder() is same as(true) %}
+    {% set paymentExtraInfo = order.fcwlopGetExtraInfo() %}
+    {% set worldlinePaymentDetails = oView.fcwlopGetWorldlinePaymentDetails() %}
+
+    <form autocomplete="off" name="myedit" id="myedit" action="{{ oViewConf.getSelfLink()|raw }}" method="post">
+        {{ oViewConf.getHiddenSid()|raw }}
+        <input type="hidden" name="cl" value="FcwlopOrderDetails">
+        <input type="hidden" name="fnc" value="">
+        <input type="hidden" name="oxid" value="{{ oxid }}">
+        <input type="hidden" name="fcwlop_capture_source" value="">
+        <input type="hidden" name="fcwlop_refund_source" value="">
+        <input type="hidden" id="fcwlop_error_message_capture_greater_null" value="{{ translate({ ident: "FCWLOP_CAPTURE_AMOUNT_GREATER_NULL" }) }}">
+        <input type="hidden" id="fcwlop_error_message_refund_greater_null" value="{{ translate({ ident: "FCWLOP_REFUND_AMOUNT_GREATER_NULL" }) }}">
+        <input type="hidden" id="fcwlop_confirm_message" value="{{ translate({ ident: "FCWLOP_ARE_YOU_SURE" }) }}">
+
+        <table border="0" width="98%">
+            <tbody>
+                {% set requestMessage = oView.fcwlopGetLastRequestMessage() %}
+                {% if requestMessage %}
+                <tr>
+                    <td class="edittext" colspan="2">
+                        <strong>{{ requestMessage|raw }}</strong>
+                    </td>
+                </tr>
+                {% endif %}
+
+                {% set captureRefundEntries = oView.fcwlopGetCaptureRefundEntries() %}
+                {% set oOrderarticles = edit.getOrderArticles() %}
+                {% set aExtraPosition = edit.fcwlopGetExtraPosition() %}
+                <tr>
+                    <td width="45%" valign="top">
+                        <fieldset style="margin: 10px 0">
+                            <legend><span style="font-weight: bold">{{ translate({ ident: "FCWLOP_PAYMENT_DETAILS" }) }}</span></legend>
+                            <table border="0" width="50%">
+                                <tbody>
+                                    <tr>
+                                        <td class="edittext">{{ translate({ ident: "FCWLOP_PAYMENT_TYPE" }) }}:</td>
+                                        <td class="edittext" style="text-align: right">{{ paymentType.oxpayments__oxdesc.value }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="edittext">{{ translate({ ident: "FCWLOP_TRANSACTION_STATUS" }) }}:</td>
+                                        <td class="edittext" style="text-align: right">{{ worldlinePaymentDetails.status }} ({{ worldlinePaymentDetails.statusOutput.statusCode }})</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="edittext">{{ translate({ ident: "FCWLOP_TRANSACTION_ID" }) }}:</td>
+                                        <td class="edittext" style="text-align: right">{{ worldlinePaymentDetails.id }}</td>
+                                    </tr>
+                                    {% if order.oxorder__fcwlopexternaltransid.value != "" %}
+                                        <tr>
+                                            <td class="edittext">{{ translate({ ident: "FCWLOP_EXTERNAL_TRANSACTION_ID" }) }}:</td>
+                                            <td class="edittext" style="text-align: right">{{ order.oxorder__fcwlopexternaltransid.value }}</td>
+                                        </tr>
+                                    {% endif %}
+                                    {% if paymentExtraInfo != "" %}
+                                        <tr>
+                                            <td class="edittext">{{ translate({ ident: "FCWLOP_ORDER_EXTRA_INFO" }) }}:</td>
+                                            <td class="edittext" style="text-align: right">{{ paymentExtraInfo }}</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </fieldset>
+
+                        {% if edit.fcwlopAllowCapture() %}
+                            {% set blShowDetailedCapture = false %}
+
+                            {% for oOrderArt in oOrderarticles %}
+                                {% set iLeftAmount = oOrderArt.oxorderarticles__oxamount.value-oOrderArt.oxorderarticles__fcwlopamountcaptured.value %}
+                                {% if iLeftAmount > 0 %}
+                                    {% set blShowDetailedCapture = true %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if aExtraPosition|length > 0 %}
+                                {% set blShowDetailedCapture = true %}
+                            {% endif %}
+
+                            {% if blShowDetailedCapture == true %}
+                                <fieldset style="margin: 10px 0">
+                                    <legend><span style="font-weight: bold">{{ translate({ ident: "FCWLOP_CAPTURE_BY_ITEM" }) }}</span></legend>
+                                    <table style="margin-top: 10px">
+                                        <tbody>
+                                            <tr>
+                                                <td class="edittext">{{ translate({ ident: "FCWLOP_AUTHORIZED_AMOUNT" }) }}</td>
+                                                <td class="edittext">
+                                                    {{ edit.oxorder__oxtotalordersum.value|number_format(2, ",", "") }}
+                                                    {{ edit.oxorder__oxcurrency.value|raw }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="2">&nbsp;</td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="2">
+                                                    <table border="0" cellpadding="5" cellspacing="5">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>{{ translate({ ident: "FCWLOP_PRODUCT_CAPTURE" }) }}</th>
+                                                                <th>{{ translate({ ident: "FCWLOP_PRODUCT_AMOUNT" }) }}</th>
+                                                                <th>{{ translate({ ident: "FCWLOP_PRODUCT_PRICE" }) }}</th>
+                                                                <th>{{ translate({ ident: "FCWLOP_PRODUCT_TITLE" }) }}</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for oOrderArt in oOrderarticles %}
+                                                                {% set iLeftAmount = oOrderArt.oxorderarticles__oxamount.value-oOrderArt.oxorderarticles__fcwlopamountcaptured.value %}
+                                                                {% if iLeftAmount > 0 %}
+                                                                    <tr>
+                                                                        <td>
+                                                                            <input type="hidden"
+                                                                                   name="capture_positions[{{ oOrderArt.getId() }}][price]"
+                                                                                   value="{{ oOrderArt.oxorderarticles__oxbprice.value|raw }}">
+                                                                            <input type="hidden"
+                                                                                   name="capture_positions[{{ oOrderArt.getId() }}][capture]"
+                                                                                   value="0">
+                                                                            <input type="checkbox"
+                                                                                   name="capture_positions[{{ oOrderArt.getId() }}][capture]"
+                                                                                   value="1"
+                                                                                   checked>
+                                                                        </td>
+                                                                        <td>
+                                                                            <input type="text" size="3"
+                                                                                   name="capture_positions[{{ oOrderArt.getId() }}][amount]"
+                                                                                   value="{{ iLeftAmount }}">
+                                                                        </td>
+                                                                        <td>{{ oOrderArt.oxorderarticles__oxbprice.value|number_format(2, ",", "") }} {{ edit.oxorder__oxcurrency.value|raw }}</td>
+                                                                        <td>{{ oOrderArt.oxorderarticles__oxtitle.value|raw }}</td>
+                                                                    </tr>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                            {% for aPosition in aExtraPosition %}
+                                                                <tr>
+                                                                    <td>
+                                                                        <input type="hidden"
+                                                                               name="capture_positions[{{ aPosition.id }}][price]"
+                                                                               value="{{ aPosition.price|raw }}">
+                                                                        {% if aPosition.price >= 0 %}
+                                                                            <input type="hidden"
+                                                                                   name="capture_positions[{{ aPosition.id }}][capture]"
+                                                                                   value="0">
+                                                                            <input type="checkbox"
+                                                                                   name="capture_positions[{{ aPosition.id }}][capture]"
+                                                                                   value="1"
+                                                                                   checked>
+                                                                        {% else %}
+                                                                            <input type="hidden"
+                                                                                   name="capture_positions[{{ aPosition.id }}][capture]"
+                                                                                   value="1">
+                                                                            <input type="checkbox" disabled="disabled" checked>
+                                                                        {% endif %}
+                                                                    </td>
+                                                                    <td>
+                                                                        <input type="hidden"
+                                                                               name="capture_positions[{{ aPosition.id }}][amount]"
+                                                                               value="{{ aPosition.amount }}">
+                                                                        <span>{{ aPosition.amount }}</span>
+                                                                    </td>
+                                                                    <td>{{ aPosition.price|number_format(2, ",", "") }} {{ edit.oxorder__oxcurrency.value|raw }}</td>
+                                                                    <td>{{ aPosition.label|raw }}</td>
+                                                                </tr>
+                                                            {% endfor %}
+                                                        <tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="2"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="edittext">
+                                                    <span><strong>{{ translate({ ident: "FCWLOP_COMPLETE_ORDER" }) }}</strong></span>
+                                                    <span>
+                                                        <input type="hidden" name="capture_completeorder" value="0">
+                                                        <input type="checkbox" name="capture_completeorder" value="1">
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="2"></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="edittext" colspan="2">
+                                                    <input type="button"
+                                                           onclick="document.myedit.fnc.value='capture';
+                                                                    document.myedit.fcwlop_capture_source.value='by-position';
+                                                                    document.myedit.submit();
+                                                                    return false;"
+                                                           value="{{ translate({ ident: "FCWLOP_BTN_CAPTURE" }) }}"
+                                                           style="padding: 0 4px 0 4px;">
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </fieldset>
+                            {% endif %}
+                            <fieldset style="margin: 10px 0">
+                                <legend><span style="font-weight: bold">{{ translate({ ident: "FCWLOP_CAPTURE_BY_AMOUNT" }) }}</span></legend>
+                                <table style="margin-top: 10px">
+                                    <tbody>
+                                        <tr>
+                                            <td class="edittext">{{ translate({ ident: "FCWLOP_AUTHORIZED_AMOUNT" }) }}</td>
+                                            <td class="edittext" style="text-align: right">
+                                                {{ edit.oxorder__oxtotalordersum.value|number_format(2, ",", "") }}
+                                                {{ edit.oxorder__oxcurrency.value|raw }}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="edittext">{{ translate({ ident: "FCWLOP_AMOUNT_IN" }) }} {{ edit.oxorder__oxcurrency.value|raw }}</td>
+                                            <td class="edittext">
+                                                <input id="fcwlop_capture_amount" type="text" name="capture_amount" value="0,00">
+                                                <input type="button" onclick="fcwlopOnClickCapture(this);"
+                                                   value="{{ translate({ ident: "FCWLOP_BTN_CAPTURE" }) }}"
+                                                   style="padding: 0 4px 0 4px;">
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </fieldset>
+                        {% endif %}
+
+                        {% if edit.fcwlopAllowRefund() %}
+                            {% set blShowDetailedRefund = true %}
+
+                            {% for oOrderArt in oOrderarticles %}
+                                {% if captureMode == 'direct-sales' %}
+                                    {% set iLeftAmount = oOrderArt.oxorderarticles__oxamount.value-oOrderArt.oxorderarticles__fcwlopamountrefunded.value %}
+                                {% else %}
+                                    {% set iLeftAmount = oOrderArt.oxorderarticles__fcwlopamountcaptured.value-oOrderArt.oxorderarticles__fcwlopamountrefunded.value %}
+                                {% endif %}
+                                {% if iLeftAmount > 0 %}
+                                    {% set blShowDetailedRefund = true %}
+                                {% endif %}
+                                {% if edit.fcwlopHasRefundableExtraPosition() %}
+                                    {% set blShowDetailedRefund = true %}
+                                {% endif %}
+                            {% endfor %}
+
+
+                            {% if blShowDetailedRefund == true %}
+                                <fieldset style="margin: 10px 0">
+                                    <legend><span style="font-weight: bold">{{ translate({ ident: "FCWLOP_REFUND_BY_ITEM" }) }}</span></legend>
+                                    <table style="margin-top: 10px">
+                                        <tbody>
+                                            <tr>
+                                                <td class="edittext">{{ translate({ ident: "FCWLOP_REFUNDABLE_AMOUNT" }) }}</td>
+                                                <td class="edittext">
+                                                    {{ (captureRefundEntries.totalCapture-captureRefundEntries.totalRefund)|number_format(2, ",", "") }}
+                                                    {{ edit.oxorder__oxcurrency.value|raw }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="2">&nbsp;</td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="2">
+                                                    <table border="0" cellpadding="5" cellspacing="5">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>{{ translate({ ident: "FCWLOP_PRODUCT_REFUND" }) }}</th>
+                                                                <th>{{ translate({ ident: "FCWLOP_PRODUCT_AMOUNT" }) }}</th>
+                                                                <th>{{ translate({ ident: "FCWLOP_PRODUCT_PRICE" }) }}</th>
+                                                                <th>{{ translate({ ident: "FCWLOP_PRODUCT_TITLE" }) }}</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for oOrderArt in oOrderarticles %}
+                                                                {% if captureMode == 'direct-sales' %}
+                                                                    {% set iLeftAmount = oOrderArt.oxorderarticles__oxamount.value-oOrderArt.oxorderarticles__fcwlopamountrefunded.value %}
+                                                                {% else %}
+                                                                    {% set iLeftAmount = oOrderArt.oxorderarticles__fcwlopamountcaptured.value-oOrderArt.oxorderarticles__fcwlopamountrefunded.value %}
+                                                                {% endif %}
+                                                                {% if iLeftAmount > 0 %}
+                                                                    <tr>
+                                                                        <td>
+                                                                            <input type="hidden"
+                                                                                   name="refund_positions[{{ oOrderArt.getId() }}][price]"
+                                                                                   value="{{ oOrderArt.oxorderarticles__oxbprice.value|raw }}">
+                                                                            <input type="hidden"
+                                                                                   name="refund_positions[{{ oOrderArt.getId() }}][refund]"
+                                                                                   value="0">
+                                                                            <input type="checkbox"
+                                                                                   name="refund_positions[{{ oOrderArt.getId() }}][refund]"
+                                                                                   value="1" checked>
+                                                                        </td>
+                                                                        <td>
+                                                                            <input type="text" size="3"
+                                                                                   name="refund_positions[{{ oOrderArt.getId() }}][amount]"
+                                                                                   value="{{ iLeftAmount }}">
+                                                                        </td>
+                                                                        <td>
+                                                                            {{ oOrderArt.oxorderarticles__oxbprice.value|number_format(2, ",", "") }}
+                                                                            {{ edit.oxorder__oxcurrency.value|raw }}
+                                                                        </td>
+                                                                        <td>{{ oOrderArt.oxorderarticles__oxtitle.value|raw }}</td>
+                                                                    </tr>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                            {% if edit.oxorder__oxdelcost.value != 0 and edit.oxorder__fcwlopdelcostrefunded.value == 0 %}
+                                                                <tr>
+                                                                    <td>
+                                                                        <input type="hidden" name="refund_positions[oxdelcost][price]"
+                                                                               value="{{ edit.oxorder__oxdelcost.value|raw }}">
+                                                                        <input type="hidden" name="refund_positions[oxdelcost][refund]"
+                                                                               value="0">
+                                                                        <input type="checkbox" name="refund_positions[oxdelcost][refund]"
+                                                                               value="1"
+                                                                               checked>
+                                                                    </td>
+                                                                    <td><input type="hidden" name="refund_positions[oxdelcost][amount]" value="1">1</td>
+                                                                    <td>{{ edit.oxorder__oxdelcost.value|number_format(2, ",", "") }} {{ edit.oxorder__oxcurrency.value|raw }}</td>
+                                                                    <td>
+                                                                        {% if edit.oxorder__oxdelcost.value > 0 %}
+                                                                            {{ translate({ ident: "FCWLOP_SURCHARGE" }) }}
+                                                                        {% else %}
+                                                                            {{ translate({ ident: "FCWLOP_DEDUCTION" }) }}
+                                                                        {% endif %}
+                                                                        {{ translate({ ident: "FCWLOP_SHIPPINGCOST" }) }}
+                                                                    </td>
+                                                                </tr>
+                                                            {% endif %}
+                                                            {% if edit.oxorder__oxpaycost.value != 0 and edit.oxorder__fcwloppaycostrefunded.value == 0 %}
+                                                                <tr>
+                                                                    <td>
+                                                                        <input type="hidden" name="refund_positions[oxpaycost][price]"
+                                                                               value="{{ edit.oxorder__oxpaycost.value|raw }}">
+                                                                        <input type="hidden" name="refund_positions[oxpaycost][refund]"
+                                                                               value="0">
+                                                                        <input type="checkbox" name="refund_positions[oxpaycost][refund]"
+                                                                               value="1"
+                                                                               checked>
+                                                                    </td>
+                                                                    <td><input type="hidden" name="refund_positions[oxpaycost][amount]" value="1">1</td>
+                                                                    <td>{{ edit.oxorder__oxpaycost.value|number_format(2, ",", "") }} {{ edit.oxorder__oxcurrency.value|raw }}</td>
+                                                                    <td>
+                                                                        {% if edit.oxorder__oxpaycost.value > 0 %}
+                                                                            {{ translate({ ident: "FCWLOP_SURCHARGE" }) }}
+                                                                        {% else %}
+                                                                            {{ translate({ ident: "FCWLOP_DEDUCTION" }) }}
+                                                                        {% endif %}
+                                                                        {{ translate({ ident: "FCWLOP_PAYMENTTYPE" }) }}
+                                                                    </td>
+                                                                </tr>
+                                                            {% endif %}
+                                                            {% if edit.oxorder__oxwrapcost.value != 0 and edit.oxorder__fcwlopwrapcostrefunded.value == 0 %}
+                                                                <tr>
+                                                                    <td>
+                                                                        <input type="hidden" name="refund_positions[oxwrapcost][price]"
+                                                                               value="{{ edit.oxorder__oxwrapcost.value|raw }}">
+                                                                        <input type="hidden" name="refund_positions[oxwrapcost][refund]"
+                                                                               value="0">
+                                                                        <input type="checkbox" name="refund_positions[oxwrapcost][refund]"
+                                                                               value="1"
+                                                                               checked>
+                                                                    </td>
+                                                                    <td><input type="hidden" name="refund_positions[oxwrapcost][amount]" value="1">1</td>
+                                                                    <td>{{ edit.oxorder__oxwrapcost.value|number_format(2, ",", "") }} {{ edit.oxorder__oxcurrency.value|raw }}</td>
+                                                                    <td>{{ translate({ ident: "FCWLOP_WRAPPING" }) }}</td>
+                                                                </tr>
+                                                            {% endif %}
+                                                            {% if edit.oxorder__oxgiftcardcost.value != 0 and edit.oxorder__fcwlopgiftcardrefunded.value == 0 %}
+                                                                <tr>
+                                                                    <td>
+                                                                        <input type="hidden"
+                                                                               name="refund_positions[oxgiftcardcost][price]"
+                                                                               value="{{ edit.oxorder__oxgiftcardcost.value|raw }}">
+                                                                        <input type="hidden"
+                                                                               name="refund_positions[oxgiftcardcost][refund]" value="0">
+                                                                        <input type="checkbox"
+                                                                               name="refund_positions[oxgiftcardcost][refund]" value="1"
+                                                                               checked>
+                                                                    </td>
+                                                                    <td><input type="hidden" name="refund_positions[oxgiftcardcost][amount]" value="1">1</td>
+                                                                    <td>{{ edit.oxorder__oxgiftcardcost.value|number_format(2, ",", "") }} {{ edit.oxorder__oxcurrency.value|raw }}</td>
+                                                                    <td>{{ translate({ ident: "FCWLOP_GIFTCARD" }) }}</td>
+                                                                </tr>
+                                                            {% endif %}
+                                                            {% if edit.oxorder__oxvoucherdiscount.value != 0 and edit.oxorder__fcwlopvoucherdiscountrefunded.value == 0 %}
+                                                                {% set dNegativeAmount = edit.oxorder__oxvoucherdiscount.value*-1 %}
+                                                                <tr>
+                                                                    <td>
+                                                                        <input type="hidden"
+                                                                               name="refund_positions[oxvoucherdiscount][price]"
+                                                                               value="{{ dNegativeAmount }}">
+                                                                        <input type="hidden"
+                                                                               name="refund_positions[oxvoucherdiscount][refund]"
+                                                                               value="1">
+                                                                        <input type="checkbox" disabled="disabled" checked>
+                                                                    </td>
+                                                                    <td><input type="hidden" name="refund_positions[oxvoucherdiscount][amount]" value="1">1</td>
+                                                                    <td>{{ dNegativeAmount|number_format(2, ",", "") }} {{ edit.oxorder__oxcurrency.value|raw }}</td>
+                                                                    <td>{{ translate({ ident: "FCWLOP_VOUCHER" }) }}</td>
+                                                                </tr>
+                                                            {% endif %}
+                                                            {% if edit.oxorder__oxdiscount.value != 0 and edit.oxorder__fcwlopdiscountrefunded.value == 0 %}
+                                                                {% set dNegativeAmount = edit.oxorder__oxdiscount.value*-1 %}
+                                                                <tr>
+                                                                    <td>
+                                                                        <input type="hidden" name="refund_positions[oxdiscount][price]"
+                                                                               value="{{ dNegativeAmount }}">
+                                                                        <input type="hidden"
+                                                                               name="refund_positions[oxdiscount][refund]"
+                                                                               value="1">
+                                                                        <input type="checkbox" disabled="disabled" checked>
+                                                                    </td>
+                                                                    <td><input type="hidden" name="refund_positions[oxdiscount][amount]" value="1">1</td>
+                                                                    <td>{{ dNegativeAmount|number_format(2, ",", "") }} {{ edit.oxorder__oxcurrency.value|raw }}</td>
+                                                                    <td>{{ translate({ ident: "FCWLOP_DISCOUNT" }) }}</td>
+                                                                </tr>
+                                                            {% endif %}
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="edittext" colspan="2">
+                                                    <input type="button"
+                                                           onclick="document.myedit.fnc.value='refund';
+                                                                    document.myedit.fcwlop_refund_source.value='by-position';
+                                                                    document.myedit.submit();
+                                                                    return false;"
+                                                           value="{{ translate({ ident: "FCWLOP_BTN_REFUND" }) }}"
+                                                           style="padding: 0 4px 0 4px;">
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </fieldset>
+                            {% endif %}
+                            <fieldset style="margin: 10px 0">
+                                <legend><span style="font-weight: bold">{{ translate({ ident: "FCWLOP_REFUND_BY_AMOUNT" }) }}</span></legend>
+                                <table style="margin-top: 10px">
+                                    <tbody>
+                                        <tr>
+                                            <td class="edittext">
+                                                {{ translate({ ident: "FCWLOP_REFUNDABLE_AMOUNT" }) }}
+                                            </td>
+                                            <td class="edittext" style="text-align: right">
+                                                {{ (captureRefundEntries.totalCapture-captureRefundEntries.totalRefund)|number_format(2, ",", "") }}
+                                                {{ edit.oxorder__oxcurrency.value|raw }}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2">&nbsp;</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="edittext">
+                                                {{ translate({ ident: "FCWLOP_AMOUNT_IN" }) }} {{ edit.oxorder__oxcurrency.value|raw }}
+                                            </td>
+                                            <td class="edittext">
+                                                <input id="fcwlop_refund_amount" type="text" name="refund_amount" value="0,00">
+                                                <input type="button" onclick="fcwlopOnClickRefund(this);"
+                                                       value="{{ translate({ ident: "FCWLOP_BTN_REFUND" }) }}"
+                                                       style="padding: 0 4px 0 4px;">
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </fieldset>
+                        {% endif %}
+                    </td>
+                    <td width="45%" valign="top">
+                        <fieldset style="margin: 10px 0">
+                            <legend><span style="font-weight: bold">{{ translate({ ident: "FCWLOP_TRANSACTIONS_DETAILS" }) }}</span></legend>
+                            <table border="0" width="50%">
+                                <tbody>
+                                    <tr>
+                                        <td>{{ translate({ ident: "FCWLOP_CAPTURE_MODE" }) }}
+                                        <td style="text-align: right">
+                                        {% if captureMode == 'direct-sales' %}
+                                            <span>{{ translate({ ident: "FCWLOP_DIRECT_SALES" }) }}</span>
+                                        {% else %}
+                                            <span>{{ translate({ ident: "FCWLOP_MANUAL_CAPTURE" }) }}</span>
+                                        {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr style="border-bottom: solid 1px">
+                                        <td>{{ translate({ ident: "FCWLOP_AUTHORIZED_AMOUNT" }) }}</td>
+                                        <td style="text-align: right">
+                                            <span>{{ edit.oxorder__oxtotalordersum.value|number_format(2, ",", "") }} {{ edit.oxorder__oxcurrency.value|raw }}</span>
+                                        </td>
+                                    </tr>
+
+                                    {% if captureRefundEntries.hasOperations == 1 %}
+                                        {% if captureMode == 'direct-sales' and captureRefundEntries.capture|length > 0 %}
+                                            {% for entry in captureRefundEntries.capture %}
+                                                <tr class="paid-details" style="">
+                                                    <td>
+                                                        <span>{{ translate({ ident: "FCWLOP_PAID_AMOUNT" }) }}</span>
+                                                        <span>{{ entry.date }}</span>
+                                                    </td>
+                                                    <td style="text-align: right; padding-right: 10px">
+                                                        {{ entry.amount|number_format(2, ",", "") }} {{ edit.oxorder__oxcurrency.value|raw }}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr class="preauth-remains-details" style="">
+                                                <td><span>{{ translate({ ident: "FCWLOP_LEFT_PREAUTHORIZED_AMOUNT" }) }}</span></td>
+                                                <td style="text-align: right; padding-right: 10px">
+                                                    {{ (edit.oxorder__oxtotalordersum.value-captureRefundEntries.totalCapture)|number_format(2, ',', '') }} {{ edit.oxorder__oxcurrency.value|raw }}
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+
+                                        {%  if captureMode == 'manual' and captureRefundEntries.capture|length > 0 %}
+                                            <tr>
+                                                <td colspan="2" style="border-bottom:solid 1px black"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <div id="capture-details-title" style="display: inline">
+                                                        <span onclick="fcwlopToggleDetails('capture-details', true)" class="unfold-icon" style="cursor: pointer">&#8744;</span>
+                                                        <span onclick="fcwlopToggleDetails('capture-details', false)" class="fold-icon" style="display: none; cursor: pointer">&#8743;</span>
+                                                    </div>
+                                                    <span>{{ translate({ ident: "FCWLOP_CAPTURED_AMOUNT" }) }}</span>
+                                                </td>
+                                                <td style="text-align: right">
+                                                    <span>{{ captureRefundEntries.totalCapture|number_format(2, ",", "") }} {{ edit.oxorder__oxcurrency.value|raw }}</span>
+                                                </td>
+                                            </tr>
+                                            {% for entry in captureRefundEntries.capture %}
+                                                <tr class="capture-details" style="display: none">
+                                                    <td><span>{{ entry.date }}</span></td>
+                                                    <td style="text-align: right; padding-right: 10px">
+                                                        {{ entry.amount|number_format(2, ",", "") }} {{ edit.oxorder__oxcurrency.value|raw }}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% endif %}
+
+                                        {% if captureRefundEntries.refund|length > 0 %}
+                                            <tr>
+                                                <td colspan="2" style="border-bottom:solid 1px black"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <div id="refund-details-title" style="display: inline">
+                                                        <span onclick="fcwlopToggleDetails('refund-details', true)" class="unfold-icon" style="cursor: pointer">&#8744;</span>
+                                                        <span onclick="fcwlopToggleDetails('refund-details', false)" class="fold-icon" style="display: none; cursor: pointer">&#8743;</span>
+                                                    </div>
+                                                    <span>{{ translate({ ident: "FCWLOP_REFUNDED_AMOUNT" }) }}</span>
+                                                </td>
+                                                <td style="text-align: right">
+                                                    <span style="color: red">{{ captureRefundEntries.totalRefund|number_format(2, ",", "") }} {{ edit.oxorder__oxcurrency.value|raw }}</span>
+                                                </td>
+                                            </tr>
+                                            {% for entry in captureRefundEntries.refund %}
+                                                <tr class="refund-details" style="display: none">
+                                                    <td><span>{{ entry.date }}</span></td>
+                                                    <td style="text-align: right; padding-right: 10px; color: red">
+                                                        {{ entry.amount|number_format(2, ",", "") }} {{ edit.oxorder__oxcurrency.value|raw }}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% endif %}
+
+                                        <tr>
+                                            <td colspan="2" style="border-bottom:solid 1px black"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>{{ translate({ ident: "FCWLOP_BALANCE" }) }}</td>
+                                            <td style="text-align: right; {% if captureRefundEntries.totalBalance < 0 %}color: red;{% endif %}">{{ captureRefundEntries.totalBalance|number_format(2, ",", "") }} {{ edit.oxorder__oxcurrency.value|raw }}</td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td><span class="font-italic">{{ translate({ ident: "FCWLOP_NO_OPERATION_STATUS_RECEIVED" }) }}</span></td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </fieldset>
+                        {% if edit.fcwlopAllowCancel() %}
+                            <fieldset style="margin: 10px 0">
+                                <legend><span style="font-weight: bold">{{ translate({ ident: "FCWLOP_CANCEL_ORDER" }) }}</span></legend>
+                                <table border="0" width="50%">
+                                    <tbody>
+                                    <tr>
+                                        <td>{{ translate({ ident: "FCWLOP_CANCEL_ORDER_LABEL" }) }}</td>
+                                        <td>
+                                            <input type="button" onclick="fcwlopOnClickCancel(this);"
+                                                   value="{{ translate({ ident: "FCWLOP_BTN_CANCEL" }) }}"
+                                                   style="padding: 0 4px 0 4px; background-color: darkred; color: white">
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </fieldset>
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+{% else %}
+    <p>{{ translate({ ident: "FCWLOP_IS_NOT_WORLDLINE_ORDER" }) }}</p>
+{% endif %}
+
+{% include "bottomnaviitem.html.twig" %}
+{% include "bottomitem.html.twig" %}

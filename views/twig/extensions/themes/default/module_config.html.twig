@@ -1,0 +1,145 @@
+{% extends "module_config.html.twig" %}
+
+{% block admin_module_config_var %}
+    {% if module_var == 'sFcwlopMode' %}
+        <dl>
+            <dd>
+                <span>{{ translate({ ident: "FCWLOP_OPEN_ACCOUNT_DESCRIPTION" }) }}</span>
+                <input type="button" value="{{ translate({ ident: "FCWLOP_OPEN_ACCOUNT_BUTTON" }) }}" onclick="fcwlopOpenAccountCreation();return false;" />
+
+                <script type="text/javascript">
+                    function fcwlopOpenAccountCreation() {
+                        var url = '{{ oView.fcwlopAccountCreationUrl()|raw }}';
+                        window.open(url, '_blank');
+                    }
+                </script>
+            </dd>
+        </dl>
+
+        {{ parent() }}
+
+    {% elseif module_var == 'sFcwlopApiSecret' or module_var == 'sFcwlopWebhookSecret' %}
+        <dl>
+            <dt>
+                <div>
+                    <input type="password" class="txt" style="width: 250px;" name="confstrs[{{ module_var }}]" value="{{ confstrs[module_var] }}" {{ readonly }}>
+                    {% include "inputhelp.html.twig" with {'sHelpId': help_id("HELP_SHOP_MODULE_" ~ module_var), 'sHelpText': help_text("HELP_SHOP_MODULE_" ~ module_var)} %}
+                </div>
+            </dt>
+            <dd style="white-space: nowrap;">
+                <span style="float:left;">{{ translate({ ident: "SHOP_MODULE_" ~ module_var }) }}</span>
+            </dd>
+            <div class="spacer"></div>
+        </dl>
+
+        {% if module_var == 'sFcwlopWebhookSecret' %}
+        <dl>
+            <dt>
+                <input id="sFcwlopWebhookUrl" type="text" class="txt" style="width: 250px;" value="{{ oView.fcwlopWebhookDestinationUrl()|raw }}" readonly="readonly" />
+                <br/>
+                <input type="button" value="{{ translate({ ident: "FCWLOP_CONFIG_WEBHOOK_URL_BUTTON" }) }}" onclick="fcwlopCopyToClip('sFcwlopWebhookUrl');return false;" />
+
+                <script type="text/javascript">
+                    function fcwlopCopyToClip(fieldId) {
+                        /* Get the text field */
+                        var copyText = document.getElementById(fieldId)
+
+                        /* Select the text field */
+                        copyText.focus();
+                        copyText.select();
+
+                        /* Copy the text inside the text field */
+                        document.execCommand("copy");
+
+                        /* Alert the copied text */
+                        alert("{{ translate({ ident: "FCWLOP_CONFIG_WEBHOOK_URL_COPIED" }) }}");
+                    }
+                </script>
+            </dt>
+            <dd>
+                {{ translate({ ident: "FCWLOP_CONFIG_WEBHOOK_URL_LABEL" }) }}
+            </dd>
+            <div class="spacer"></div>
+        </dl>
+        {% endif %}
+    {% elseif module_var == 'sFcwlopIframeTemplate' %}
+        {{ parent() }}
+
+        <dl>
+            <dt>
+                <button id="worldline-test-connection-button" onclick="fcwlopTestConnection();return false;">
+                    {{ translate({ ident: "FCWLOP_CONFIG_TEST_CONNECTION" }) }}
+                </button>
+                <div id="test-connection-result" style="float: right;margin-left: 20px;padding-top: 5px;"></div>
+
+                <script type="text/javascript">
+                    function fcwlopTestConnection()
+                    {
+                        var url = '{{ oView.fcwlopTestConnectionUrl()|raw }}';
+                        var xhttp = new XMLHttpRequest();
+                        xhttp.onload = function() {
+                            var resultContainer = document.getElementById('test-connection-result');
+                            var response = JSON.parse(this.responseText);
+                            if(response.status === 'SUCCESS') {
+                                resultContainer.innerHTML = '{{ translate({ ident: "FCWLOP_CONNECTION_SUCCEEDED" }) }}'
+                                resultContainer.style.color = 'green'
+                                console.log('Success');
+                            } else {
+                                resultContainer.innerHTML = '{{ translate({ ident: "FCWLOP_CONNECTION_FAILED" }) }}'
+                                resultContainer.style.color = 'red'
+                                console.log('Failure');
+                            }
+                        }
+                        xhttp.open('GET', url)
+                        xhttp.send();
+                    }
+                </script>
+            </dt>
+            <dd></dd>
+            <div class="spacer"></div>
+        </dl>
+    {% elseif module_var == 'sFcwlopCaptureMethod' %}
+        <dl>
+            <dt>
+                <div id="update-method-result" style="float: right;margin-left: 20px;padding-top: 5px;"></div>
+                <button id="worldline-update-methods-button" onclick="fcwlopUpdatePaymentMethods();return false;">
+                    {{ translate({ ident: "FCWLOP_CONFIG_UPDATE_PAYMENT_METHOD" }) }}
+                </button>
+
+                <script type="text/javascript">
+                    function fcwlopUpdatePaymentMethods()
+                    {
+                        var url = '{{ oView.fcwlopGetConfigUpdateUrl()|raw }}';
+                        var xhttp = new XMLHttpRequest();
+                        xhttp.onload = function() {
+                            var resultContainer = document.getElementById('update-method-result');
+                            var response = JSON.parse(this.responseText);
+                            if(response.status === 'SUCCESS') {
+                                resultContainer.innerHTML = '{{ translate({ ident: "FCWLOP_INSTALLATION_SUCCEEDED" }) }}'
+                                resultContainer.style.color = 'green'
+                                console.log('Success');
+                            } else {
+                                resultContainer.innerHTML = '{{ translate({ ident: "FCWLOP_INSTALLATION_FAILED" }) }}'
+                                resultContainer.style.color = 'red'
+                                console.log('Failure');
+                                console.log(response.body.message);
+                            }
+                        }
+                        xhttp.open('GET', url)
+                        xhttp.send();
+                    }
+                </script>
+            </dt>
+            <dd></dd>
+            <div class="spacer"></div>
+        </dl>
+
+        {{ parent() }}
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}
+
+{% block admin_module_config_form %}
+    {{ parent() }}
+{% endblock %}

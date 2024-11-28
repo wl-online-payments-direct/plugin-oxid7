@@ -1,0 +1,12 @@
+{% extends "page/checkout/thankyou.html.twig" %}
+
+{% block checkout_thankyou_info %}
+
+    {{ parent() }}
+
+    {% if attribute(oView, 'fcwlopIsWorldlinePaymentMethod')  is defined and oView.fcwlopIsWorldlinePaymentMethod() is same as(true) %}
+        {% if attribute(oView, 'fcwlopIsPendingCheckout')  is defined and oView.fcwlopIsPendingCheckout() is same as(true) %}
+            <span style="font-weight: bold">{{ translate({ ident: "FCWLOP_CHECKOUT_PENDING_THANKYOU" }) }}</span><br>
+        {% endif %}
+    {% endif %}
+{% endblock %}
