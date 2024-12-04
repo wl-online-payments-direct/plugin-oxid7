@@ -9,7 +9,7 @@ namespace FC\FCWLOP\extend\Application\Controller\Admin;
 use FC\FCWLOP\Application\Helper\FcwlopPaymentHelper;
 use OxidEsales\Eshop\Core\Registry;
 
-class FcwlopModuleConfiguration extends ModuleConfiguration_parent
+class FcwlopModuleConfiguration extends FcwlopModuleConfiguration_parent
 {
     /**
      * @return string

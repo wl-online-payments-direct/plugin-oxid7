@@ -11,7 +11,7 @@ use FC\FCWLOP\Application\Model\Request\FcwlopCreateHostedCheckoutRequest;
 use OxidEsales\Eshop\Application\Model\Order as CoreOrder;
 use OxidEsales\Eshop\Core\Registry;
 
-class FcwlopPaymentGateway extends PaymentGateway_parent
+class FcwlopPaymentGateway extends FcwlopPaymentGateway_parent
 {
     /**
      * OXID URL parameters to copy from initial order execute request

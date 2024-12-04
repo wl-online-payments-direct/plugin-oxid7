@@ -6,6 +6,6 @@
 
 namespace FC\FCWLOP\extend\Application\Model;
 
-class FcwlopOrderArticle extends OrderArticle_parent
+class FcwlopOrderArticle extends FcwlopOrderArticle_parent
 {
 }

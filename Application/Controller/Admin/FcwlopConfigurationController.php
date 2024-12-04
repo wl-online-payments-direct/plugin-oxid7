@@ -24,7 +24,7 @@ class FcwlopConfigurationController extends FrontendController
             $iUpdateSuccess = 0;
 
             $oEnabledWorldlineMethods = $oPaymentHelper->fcwlopFetchWorldlineEnabledMethods();
-            $aInstalledWorldlineMethods = $oPaymentHelper->fetchWorldlineInstalledMethods();
+            $aInstalledWorldlineMethods = $oPaymentHelper->fcwlopFetchWorldlineInstalledMethods();
 
             foreach ($oEnabledWorldlineMethods as $oPaymentProduct) {
                 $iWlopId = $oPaymentProduct->getId();

@@ -15,7 +15,7 @@
   ],
   "extra": {
     "oxideshop": {
-      "target-directory": "fc/fcwlop"
+      "target-directory": "wl-online-payments-direct/plugin-oxid7"
     }
   },
   "autoload": {

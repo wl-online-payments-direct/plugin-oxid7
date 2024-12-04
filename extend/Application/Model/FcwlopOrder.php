@@ -16,7 +16,7 @@ use OxidEsales\Eshop\Core\Exception\DatabaseErrorException;
 use OxidEsales\Eshop\Core\Field;
 use OxidEsales\Eshop\Core\Registry;
 
-class FcwlopOrder extends Order_parent
+class FcwlopOrder extends FcwlopOrder_parent
 {
     /**
      * Temporary field for saving the order nr

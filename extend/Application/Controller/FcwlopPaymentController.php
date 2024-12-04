@@ -14,7 +14,7 @@ use OxidEsales\Eshop\Application\Model\Country;
 use OxidEsales\Eshop\Core\Language;
 use OxidEsales\Eshop\Core\Registry;
 
-class FcwlopPaymentController extends PaymentController_parent
+class FcwlopPaymentController extends FcwlopPaymentController_parent
 {
     /**
      * Delete sess_challenge from session to trigger the creation of a new order when needed

@@ -9,7 +9,7 @@ namespace FC\FCWLOP\extend\Application\Controller;
 use FC\FCWLOP\Application\Helper\FcwlopPaymentHelper;
 use OxidEsales\Eshop\Core\Registry;
 
-class FcwlopThankYouController extends ThankYouController_parent
+class FcwlopThankYouController extends FcwlopThankYouController_parent
 {
     /**
      * @return bool

@@ -9,7 +9,7 @@ namespace FC\FCWLOP\extend\Application\Controller\Admin;
 use OxidEsales\Eshop\Core\Module\Module;
 use OxidEsales\Eshop\Core\Registry;
 
-class FcwlopModuleMain extends ModuleMain_parent
+class FcwlopModuleMain extends FcwlopModuleMain_parent
 {
     /**
      * @var null

@@ -9,7 +9,7 @@ namespace FC\FCWLOP\extend\Application\Model;
 use FC\FCWLOP\Application\Helper\FcwlopPaymentHelper;
 use FC\FCWLOP\Application\Model\Payment\Methods\FcwlopWorldlineGenericMethod;
 
-class FcwlopPayment extends Payment_parent
+class FcwlopPayment extends FcwlopPayment_parent
 {
     /**
      * Check if given payment method is a Worldline method

@@ -174,7 +174,7 @@ class FcwlopPaymentHelper
      * @throws DatabaseConnectionException
      * @throws DatabaseErrorException
      */
-    public function fcwlopFetchWorldlineInstlledMethods()
+    public function fcwlopFetchWorldlineInstalledMethods()
     {
         $aMethods = [];
 

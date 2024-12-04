@@ -12,7 +12,7 @@ use OxidEsales\Eshop\Application\Model\Order;
 use OxidEsales\Eshop\Core\Exception\DatabaseConnectionException;
 use OxidEsales\Eshop\Core\Registry;
 
-class FcwlopOrderController extends OrderController_parent
+class FcwlopOrderController extends FcwlopOrderController_parent
 {
     /**
      * Delete sess_challenge from session to trigger the creation of a new order when needed
