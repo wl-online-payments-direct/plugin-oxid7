@@ -46,7 +46,7 @@ Edit < shoproot >/composer.json, section "autoload" as follows :
 
 ## Configuration
 To use the module after activation : \
-Navigate to : Admin > Extensions > Modules > Stripe Payment > Settings
+Navigate to : Admin > Extensions > Modules > Worldline Online Payment direct > Settings
 
 - Basic configuration :
   - < WIP >
