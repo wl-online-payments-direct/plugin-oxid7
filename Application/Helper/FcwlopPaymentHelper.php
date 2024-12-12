@@ -138,6 +138,26 @@ class FcwlopPaymentHelper
     }
 
     /**
+     * Returns configured Credit Card Checkout mode
+     *
+     * @return string
+     */
+    public function fcwlopGetWorldlineCreditCardMode()
+    {
+        return $this->fcwlopGetShopConfVar('sFcwlopCcCheckoutType');
+    }
+
+    /**
+     * Returns configured Credit Card Group display mode
+     *
+     * @return boolean
+     */
+    public function fcwlopIsWorldlineCreditCardGrouped()
+    {
+        return (bool) $this->fcwlopGetShopConfVar('sFcwlopCcGroupDisplay');
+    }
+
+    /**
      * @return DataObject|TestConnection
      * @throws Exception
      */
