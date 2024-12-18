@@ -38,6 +38,7 @@ class FcwlopConfigurationController extends FrontendController
                     'logoLink' => $oPaymentProduct->getDisplayHints()->getLogo(),
                     'type' => $oPaymentProduct->getPaymentMethod(),
                     'groupType' => $oPaymentProduct->getPaymentProductGroup(),
+                    'active' => 0,
                 ];
 
                 try {
@@ -47,6 +48,17 @@ class FcwlopConfigurationController extends FrontendController
                     Registry::getLogger()->error($oEx->getMessage());
                 }
             }
+
+            $oLang = Registry::getLang();
+            $aMethodDetails = [
+                'id' => 0,
+                'label' => $oLang->translateString('FCWLOP_GROUPED_CARDS'),
+                'logoLink' => '',
+                'type' => 'card',
+                'groupType' => 'Cards',
+                'active' => 1,
+            ];
+            FcwlopPaymentHelper::getInstance()->fcwlopRegisterWorldlineMethod($aMethodDetails);
 
             if ($iUpdateSuccess === 0) {
                 $aResponse = $this->composeJsonResponseElements(

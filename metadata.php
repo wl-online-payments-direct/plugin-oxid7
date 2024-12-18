@@ -65,7 +65,6 @@ $aModule = [
         ['group' => 'FCWLOP_GENERAL',           'name' => 'sFcwlopWebhookSecret',               'type' => 'str',        'value' => '',          'position' => 31],
         ['group' => 'FCWLOP_GENERAL',           'name' => 'sFcwlopLiveEndpoint',                'type' => 'str',        'value' => '',          'position' => 40],
         ['group' => 'FCWLOP_GENERAL',           'name' => 'sFcwlopSandboxEndpoint',             'type' => 'str',        'value' => '',          'position' => 41],
-        ['group' => 'FCWLOP_GENERAL',           'name' => 'sFcwlopIframeTemplate',              'type' => 'str',        'value' => '',          'position' => 60],
 
         ['group' => 'FCWLOP_PAYMENT_METHODS',   'name' => 'sFcwlopCaptureMethod',               'type' => 'select',     'value' => 'direct-sales',  'position' => 10, 'constraints' => 'direct-sales|manual'],
         ['group' => 'FCWLOP_PAYMENT_METHODS',   'name' => 'sFcwlopAutoCancellation',            'type' => 'select',     'value' => '',              'position' => 20, 'constraints' => '0|1|2|4|6|12|24'],

@@ -22,8 +22,6 @@ $aLang = array(
     'SHOP_MODULE_sFcwlopWebhookSecret'                          => 'Webhook secret',
     'SHOP_MODULE_sFcwlopLiveEndpoint'                           => 'Live endpoint',
     'SHOP_MODULE_sFcwlopSandboxEndpoint'                        => 'Sandbox endpoint',
-    'SHOP_MODULE_sFcwlopFullRedirectTemplate'                   => 'Full Redirect Vorlage Name',
-    'SHOP_MODULE_sFcwlopIframeTemplate'                         => 'Iframe Vorlage Name',
 
     'SHOP_MODULE_GROUP_FCWLOP_PAYMENT_METHODS'                  => 'Zahlungsmethoden Konfiguration',
     'SHOP_MODULE_sFcwlopCaptureMethod'                          => 'Capture-Modus',
@@ -42,7 +40,17 @@ $aLang = array(
     'SHOP_MODULE_sFcwlopCcCheckoutType_iframe'                  => 'Umgeleitet',
     'SHOP_MODULE_sFcwlopCcGroupDisplay'                         => 'Kreditkarten gruppieren',
 
-    'SHOP_MODULE_GROUP_FCWLOP_ERROR_MAPPING'                    => 'Zuordnung von Fehlermeldungen',
+    'HELP_SHOP_MODULE_sFcwlopMode'                              => 'Sandbox = Testmodus, Live = Produktion.',
+    'HELP_SHOP_MODULE_sFcwlopPspId'                             => 'Worldline-Konto-ID.',
+    'HELP_SHOP_MODULE_sFcwlopApiKey'                            => 'Gefunden auf dem Worldine API-Portal.',
+    'HELP_SHOP_MODULE_sFcwlopApiSecret'                         => 'Gefunden auf dem Worldine API-Portal.',
+    'HELP_SHOP_MODULE_sFcwlopWebhookKey'                        => 'Gefunden auf dem Worldine API-Portal.',
+    'HELP_SHOP_MODULE_sFcwlopWebhookSecret'                     => 'Gefunden auf dem Worldine API-Portal.',
+    'HELP_SHOP_MODULE_sFcwlopLiveEndpoint'                      => 'https://payment.direct.worldline-solutions.com ohne abschließendes / oder irgendeinen Zusatz.',
+    'HELP_SHOP_MODULE_sFcwlopSandboxEndpoint'                   => 'https://payment.preprod.direct.worldline-solutions.com ohne abschließendes / oder irgendeinen Zusatz.',
+    'HELP_SHOP_MODULE_sFcwlopCaptureMethod'                     => 'Capture-Modus : Direct Sales = Autorisierung + Erfassung, Manuell = separate Erfassung manuell.',
+    'HELP_SHOP_MODULE_sFcwlopCcCheckoutType'                    => 'Auf der Zahlungsseite = Kartendatenerfassung im Shop ohne Weiterleitung, Umgeleitet = Kartendatenerfassung durch Worldline auf ihrer Seite.',
+    'HELP_SHOP_MODULE_sFcwlopCcGroupDisplay'                    => 'Kreditkartenauswahl auf der gehosteten Checkout-Seite nach der Weiterleitung anzeigen.',
 
     'FCWLOP_CONFIG_WEBHOOK_URL_LABEL'                           => 'Webhook URL',
     'FCWLOP_CONFIG_WEBHOOK_URL_BUTTON'                          => 'In die Zwischenablage kopieren',

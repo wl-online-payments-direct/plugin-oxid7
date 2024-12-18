@@ -9,6 +9,7 @@ namespace FC\FCWLOP\Application\Model\Request;
 use FC\FCWLOP\Application\Helper\FcwlopOrderHelper;
 use FC\FCWLOP\Application\Helper\FcwlopPaymentHelper;
 use FC\FCWLOP\Application\Model\FcwlopRequestLog;
+use FC\FCWLOP\Application\Model\Payment\FcwlopPaymentMethodTypes;
 use FC\FCWLOP\Application\Model\Response\FcwlopGenericErrorResponse;
 use FC\FCWLOP\Application\Model\Response\FcwlopGenericResponse;
 use OnlinePayments\Sdk\Domain\CreateHostedCheckoutRequest;
@@ -19,6 +20,7 @@ use OnlinePayments\Sdk\Domain\PaymentProductFiltersHostedCheckout;
 use OnlinePayments\Sdk\ReferenceException;
 use OnlinePayments\Sdk\ValidationException;
 use OxidEsales\Eshop\Application\Model\Order as CoreOrder;
+use OxidEsales\Eshop\Application\Model\Payment;
 use OxidEsales\Eshop\Core\Registry;
 
 class FcwlopCreateHostedCheckoutRequest extends FcwlopBaseRequest
@@ -77,9 +79,21 @@ class FcwlopCreateHostedCheckoutRequest extends FcwlopBaseRequest
         $oParams = new HostedCheckoutSpecificInput();
         $oParams->setLocale(FcwlopOrderHelper::getInstance()->fcwlopGetLocale($oCoreOrder));
 
+        $aProductFilter = [$iPaymentProductId];
+        if ($iPaymentProductId === 0) {
+            $aProductFilter = [];
+            foreach (FcwlopPaymentMethodTypes::WORLDLINE_CARDS_PRODUCTS as $sPaymentId => $sName) {
+                $oPayment = oxNew(Payment::class);
+                $oPayment->load($sPaymentId);
+                if ($oPayment->oxpayments__oxactive->value == 1) {
+                    $aProductFilter[] = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentModel($sPaymentId)->getWorldlinePaymentCode();
+                }
+            }
+        }
+
         $oProductFilters = new PaymentProductFiltersHostedCheckout();
         $oPaymentRestrictionFilter = new PaymentProductFilter();
-        $oPaymentRestrictionFilter->setProducts([$iPaymentProductId]);
+        $oPaymentRestrictionFilter->setProducts($aProductFilter);
         $oProductFilters->setRestrictTo($oPaymentRestrictionFilter);
         $oParams->setPaymentProductFilters($oProductFilters);
 

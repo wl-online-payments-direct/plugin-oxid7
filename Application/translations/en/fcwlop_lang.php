@@ -26,4 +26,6 @@ $aLang = [
     'FCWLOP_ERROR_ORDER_FAILED'                 => 'Payment failed, please try again',
     'FCWLOP_SECOND_CHANCE_MAIL_SUBJECT'         => 'Completion of your order at',
     'FCWLOP_CHECKOUT_PENDING_THANKYOU'          => 'The payment is still pending.',
+
+    'FCWLOP_GROUPED_CARDS'                      => 'Credit card',
 ];

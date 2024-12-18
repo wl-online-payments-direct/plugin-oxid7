@@ -8,8 +8,12 @@ namespace FC\FCWLOP\extend\Application\Controller;
 
 use FC\FCWLOP\Application\Helper\FcwlopOrderHelper;
 use FC\FCWLOP\Application\Helper\FcwlopPaymentHelper;
+use FC\FCWLOP\Application\Model\Payment\FcwlopPaymentMethodCodes;
 use OxidEsales\Eshop\Application\Model\Order;
+use OxidEsales\Eshop\Application\Model\Payment;
+use OxidEsales\Eshop\Application\Model\UserPayment;
 use OxidEsales\Eshop\Core\Exception\DatabaseConnectionException;
+use OxidEsales\Eshop\Core\Field;
 use OxidEsales\Eshop\Core\Registry;
 
 class FcwlopOrderController extends FcwlopOrderController_parent
@@ -105,8 +109,21 @@ class FcwlopOrderController extends FcwlopOrderController_parent
                 return $this->redirectWithError('FCWLOP_ERROR_TRANSACTIONID_NOT_FOUND');
             }
 
+            $oPaymentDetails = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($sTransactionId);
+            if ($oPayment->oxpayments__oxid == 'fcwlopgroupedcard') {
+                $iProductId = $oPaymentDetails->getPaymentOutput()->getCardPaymentMethodSpecificOutput()->getPaymentProductId();
+                $sPaymentType = FcwlopPaymentMethodCodes::fcwlopGetWorldlinePaymentType($iProductId);
+                if (!is_null($sPaymentType)) {
+                    $oUserPayment = $oOrder->getPaymentType();
+                    $oUserPayment->oxuserpayments__oxpaymentsid = new Field($sPaymentType);
+                    $oOrder->oxorder__oxpaymenttype = new Field($sPaymentType);
+
+                    $oUserPayment->save();
+                    $oOrder->save();
+                }
+            }
+
             if($sResult == 'success') {
-                $oPaymentDetails = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($sTransactionId);
                 if ($oPaymentDetails->getStatus() == 'REJECTED') {
                     FcwlopOrderHelper::getInstance()->fcwlopCancelCurrentOrder();
                     return $this->redirectWithError('FCWLOP_ERROR_ORDER_FAILED');

@@ -54,10 +54,32 @@ class FcwlopPaymentMethodTypes
         'fcwlopupi' => 'UPI - UnionPay International',
         'fcwlopvisa' => 'Visa',
         'fcwlopwechatpay' => 'WeChat Pay',
+        'fcwlopgroupedcard' => 'Credit Card',
+    ];
+
+    /**
+     * @var array|string[]
+     */
+    public const WORLDLINE_CARDS_PRODUCTS = [
+        'fcwlopamericanexpress' => 'American Express',
+        'fcwlopbancontact' => 'Bancontact',
+        'fcwlopcartesbancaires' => 'Cartes Bancaires',
+        'fcwlopdinersclub' => 'Diners Club',
+        'fcwlopdiscover' => 'Discover',
+        'fcwlopjcb' => 'JCB',
+        'fcwlopmaestro' => 'Maestro',
+        'fcwlopmastercard' => 'Mastercard',
+        'fcwlopupi' => 'UPI - UnionPay International',
+        'fcwlopvisa' => 'Visa',
     ];
 
     public static function fcwlopIsWorldlineMethodType($sPaymentMethodType)
     {
         return in_array($sPaymentMethodType, array_keys(self::WORLDLINE_PAYMENT_TYPES));
+    }
+
+    public static function fcwlopIsWorldlineCardsProduct($sPaymentMethodType)
+    {
+        return in_array($sPaymentMethodType, array_keys(self::WORLDLINE_CARDS_PRODUCTS));
     }
 }

@@ -54,6 +54,7 @@ class FcwlopPaymentMethodCodes
         'fcwlopupi' => 56,
         'fcwlopvisa' => 1,
         'fcwlopwechatpay' => 5404,
+        'fcwlopgroupedcard' => 0,
     ];
 
     /**
@@ -63,5 +64,18 @@ class FcwlopPaymentMethodCodes
     public static function fcwlopIsWorldlineMethodCode($iPaymentMethodCode)
     {
         return in_array($iPaymentMethodCode, self::WORLDLINE_PAYMENT_CODES);
+    }
+
+    /**
+     * @param int $iPaymentMethodCode
+     * @return bool
+     */
+    public static function fcwlopGetWorldlinePaymentType($iPaymentMethodCode)
+    {
+        if (!self::fcwlopIsWorldlineMethodCode($iPaymentMethodCode)) {
+            return null;
+        }
+        $aPaymentTypes = array_flip(self::WORLDLINE_PAYMENT_CODES);
+        return $aPaymentTypes[$iPaymentMethodCode];
     }
 }

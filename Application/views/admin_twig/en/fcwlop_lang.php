@@ -22,8 +22,6 @@ $aLang = array(
     'SHOP_MODULE_sFcwlopWebhookSecret'                          => 'Webhook secret',
     'SHOP_MODULE_sFcwlopLiveEndpoint'                           => 'Live endpoint',
     'SHOP_MODULE_sFcwlopSandboxEndpoint'                        => 'Sandbox endpoint',
-    'SHOP_MODULE_sFcwlopFullRedirectTemplate'                   => 'Full Redirect template name',
-    'SHOP_MODULE_sFcwlopIframeTemplate'                         => 'Iframe template name',
 
     'SHOP_MODULE_GROUP_FCWLOP_PAYMENT_METHODS'                  => 'Payment methods configuration',
     'SHOP_MODULE_sFcwlopCaptureMethod'                          => 'Capture mode',
@@ -42,7 +40,17 @@ $aLang = array(
     'SHOP_MODULE_sFcwlopCcCheckoutType_iframe'                  => 'Redirected',
     'SHOP_MODULE_sFcwlopCcGroupDisplay'                         => 'Group credit cards',
 
-    'SHOP_MODULE_GROUP_FCWLOP_ERROR_MAPPING'                    => 'Error messages mapping',
+    'HELP_SHOP_MODULE_sFcwlopMode'                              => 'Sandbox = test mode, Live = production.',
+    'HELP_SHOP_MODULE_sFcwlopPspId'                             => 'Worldline account id.',
+    'HELP_SHOP_MODULE_sFcwlopApiKey'                            => 'Found on Worldine API portal.',
+    'HELP_SHOP_MODULE_sFcwlopApiSecret'                         => 'Found on Worldine API portal.',
+    'HELP_SHOP_MODULE_sFcwlopWebhookKey'                        => 'Found on Worldine API portal.',
+    'HELP_SHOP_MODULE_sFcwlopWebhookSecret'                     => 'Found on Worldine API portal.',
+    'HELP_SHOP_MODULE_sFcwlopLiveEndpoint'                      => 'https://payment.direct.worldline-solutions.com without trailing / or any addition.',
+    'HELP_SHOP_MODULE_sFcwlopSandboxEndpoint'                   => 'https://payment.preprod.direct.worldline-solutions.com without trailing / or any addition.',
+    'HELP_SHOP_MODULE_sFcwlopCaptureMethod'                     => 'Capture mode : Direct Sales = authorization + capture, Manual = separate capture manually.',
+    'HELP_SHOP_MODULE_sFcwlopCcCheckoutType'                    => 'On payment page = card data collection inside the shop without redirection, Redirected = card data collection by Worldline on their end.',
+    'HELP_SHOP_MODULE_sFcwlopCcGroupDisplay'                    => 'Shows credit cards selection on hosted checkout page after redirect.',
 
     'FCWLOP_CONFIG_WEBHOOK_URL_LABEL'                           => 'Webhook exposed URL',
     'FCWLOP_CONFIG_WEBHOOK_URL_BUTTON'                          => 'Copy to clipboard',

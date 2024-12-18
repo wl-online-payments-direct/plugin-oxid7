@@ -138,6 +138,36 @@ class FcwlopPaymentHelper
     }
 
     /**
+     * Returns configured Credit Card Checkout mode
+     *
+     * @return string
+     */
+    public function fcwlopGetWorldlineCreditCardMode()
+    {
+        return $this->fcwlopGetShopConfVar('sFcwlopCcCheckoutType');
+    }
+
+    /**
+     * Returns configured Credit Card Group display mode
+     *
+     * @return boolean
+     */
+    public function fcwlopIsWorldlineCreditCardGrouped()
+    {
+        return (bool) $this->fcwlopGetShopConfVar('sFcwlopCcGroupDisplay');
+    }
+
+    /**
+     * Checks if method is a worldline Cards product
+     *
+     * @return boolean
+     */
+    public function fcwlopIsWorldlineCardsProduct($sPaymentMethodType)
+    {
+        return FcwlopPaymentMethodTypes::fcwlopIsWorldlineCardsProduct($sPaymentMethodType);
+    }
+
+    /**
      * @return DataObject|TestConnection
      * @throws Exception
      */
@@ -211,7 +241,7 @@ class FcwlopPaymentHelper
 
         $sQuery = "
             INSERT INTO oxpayments(OXID,OXACTIVE,OXDESC,OXADDSUM,OXADDSUMTYPE,OXFROMBONI,OXFROMAMOUNT,OXTOAMOUNT,OXVALDESC,OXCHECKED,OXDESC_1,OXVALDESC_1,OXDESC_2,OXVALDESC_2,OXDESC_3,OXVALDESC_3,OXLONGDESC,OXLONGDESC_1,OXLONGDESC_2,OXLONGDESC_3,OXSORT, FCWLOPISWORLDLINE, FCWLOPEXTID, FCWLOPEXTTYPE, FCWLOPEXTGROUPTYPE, FCWLOPEXTLOGO) 
-            VALUES ('{$sOxid}', 0, '{$aMethodDetails['label']}', 0, 'abs', 0, 0, 1000000, '', 0, '{$aMethodDetails['label']}', '', '', '', '', '', '', '', '', '', 0, 1, {$aMethodDetails['id']}, '{$aMethodDetails['type']}', '{$aMethodDetails['groupType']}', '{$aMethodDetails['logoLink']}');
+            VALUES ('{$sOxid}', '{$aMethodDetails['active']}', '{$aMethodDetails['label']}', 0, 'abs', 0, 0, 1000000, '', 0, '{$aMethodDetails['label']}', '', '', '', '', '', '', '', '', '', 0, 1, {$aMethodDetails['id']}, '{$aMethodDetails['type']}', '{$aMethodDetails['groupType']}', '{$aMethodDetails['logoLink']}');
         ";
 
         $blNewlyAdded = FcwlopDatabaseHelper::insertRowIfNotExists(

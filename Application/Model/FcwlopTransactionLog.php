@@ -49,7 +49,9 @@ class FcwlopTransactionLog extends BaseModel
         $oDb = DatabaseProvider::getDb();
         $sSavedResponse = $this->encodeData($aTransaction);
 
-        $oTxTime = isset($aTransaction['created']) ? new \DateTimeImmutable($aTransaction['created']) : '';
+        $sTxTime = isset($aTransaction['created'])
+            ? (new \DateTimeImmutable($aTransaction['created']))->format('Y-m-d H:i:s')
+            : '';
         $sMerchantId = $aTransaction['merchantId'] ?? '';
         $sType = $aTransaction['type'] ?? '';
 
@@ -97,7 +99,7 @@ class FcwlopTransactionLog extends BaseModel
                         :txtime, :ordernr, :txid, :txstep, :type, :mode, :method, :price, :currency, :status, :statuscode, :merchantid, :response 
                     )";
         $oDb->Execute($sQuery, [
-            ':txtime' => $oTxTime->format('Y-m-d H:i:s'),
+            ':txtime' => $sTxTime,
             ':ordernr' => $iOrderNr,
             ':txid' => $iTxId,
             ':txstep' => $iTxStep,

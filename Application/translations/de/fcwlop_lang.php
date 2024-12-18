@@ -26,4 +26,6 @@ $aLang = [
     'FCWLOP_ERROR_ORDER_FAILED'                 => 'Die Bezahlung ist fehlgeschlagen, bitte versuchen Sie es erneut',
     'FCWLOP_SECOND_CHANCE_MAIL_SUBJECT'         => 'Abschluss Ihrer Bestellung bei',
     'FCWLOP_CHECKOUT_PENDING_THANKYOU'          => 'Die Zahlung steht noch aus.',
+
+    'FCWLOP_GROUPED_CARDS'                      => 'Kreditkarte',
 ];

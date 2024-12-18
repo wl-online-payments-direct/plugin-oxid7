@@ -7,6 +7,7 @@
 namespace FC\FCWLOP\Application\Model\Payment;
 
 use FC\FCWLOP\Application\Model\Payment\Methods\FcwlopWorldlineGenericMethod;
+use FC\FCWLOP\Application\Model\Payment\Methods\FcwlopWorldlineGroupedCardMethod;
 
 class FcwlopPaymentMethodModels
 {
@@ -59,7 +60,8 @@ class FcwlopPaymentMethodModels
         'fcwlopupi' => null,
         'fcwlopvisa' => null,
         'fcwlopwechatpay' => null,
-        'fcwlopgeneric' => FcwlopWorldlineGenericMethod::class
+        'fcwlopgeneric' => FcwlopWorldlineGenericMethod::class,
+        'fcwlopgroupedcard' => FcwlopWorldlineGroupedCardMethod::class
     ];
 
     /**
