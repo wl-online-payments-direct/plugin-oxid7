@@ -1,0 +1,42 @@
+{% set oPaymentModel = paymentmethod.fcwlopGetWorldlinePaymentModel() %}
+{% set sHostedTokenizationUrl = oView.fcwlopGetCardTokenizationUrl() %}
+{% set sTokenizationJsToolsUrl = oView.fcwlopGetTokenizationJsToolsUrl() %}
+
+<input type="hidden" name="dynvalue[fcwlop_token_id]" id="fcwlop_token_id">
+<div id="fcwlop_creditcard_error_box" class="form-group" style="display:none;">
+    <div class="col-lg-12"></div>
+    <div class="mb-3">
+        <div class="form-control" style="background-color:#ff5959" id="fcwlop_creditcard_error">{{ translate({ ident: "ERROR" }) }}</div>
+    </div>
+</div>
+
+<div class="form-group">
+    <label class="req control-label col-lg-3">{{ translate({ ident: "FCWLOP_GROUPED_CARDS" }) }}</label>
+    <div class="mb-3">
+        <div class="form-group" id="fcwlop_div_hosted_tokenization"></div>
+    </div>
+</div>
+
+<script src="{{ sTokenizationJsToolsUrl }}"></script> <!-- contains the methods needed for tokenization -->
+<script>
+    var tokenizer = new Tokenizer('{{ sHostedTokenizationUrl }}', 'fcwlop_div_hosted_tokenization', {hideCardholderName: false });
+
+    var cardPaymentMethodRadioButton = document.getElementById('payment_fcwlopgroupedcard');
+    cardPaymentMethodRadioButton.addEventListener('click', function(event) {
+        if ('undefined' == typeof tokenizer.IframeInstance) {
+            tokenizer.initialize()
+                .catch(reason => {
+                    fcwlopCCTokenFailed(reason)
+                })
+        }
+    });
+    if (cardPaymentMethodRadioButton.checked) {
+        cardPaymentMethodRadioButton.click();
+    }
+
+    var paymentForm = document.getElementById('payment');
+    paymentForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        fcwlopSubmitPaymentForm(paymentForm);
+    });
+</script>

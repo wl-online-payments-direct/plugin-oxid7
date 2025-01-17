@@ -7,7 +7,10 @@
 namespace FC\FCWLOP\extend\Application\Model;
 
 use FC\FCWLOP\Application\Helper\FcwlopPaymentHelper;
+use FC\FCWLOP\Application\Model\Payment\FcwlopPaymentMethodCodes;
 use FC\FCWLOP\Application\Model\Request\FcwlopCreateHostedCheckoutRequest;
+use FC\FCWLOP\Application\Model\Request\FcwlopCreatePaymentRequest;
+use FC\FCWLOP\Application\Model\Request\FcwlopGetHostedTokenizationRequest;
 use OxidEsales\Eshop\Application\Model\Order as CoreOrder;
 use OxidEsales\Eshop\Core\Registry;
 
@@ -96,32 +99,81 @@ class FcwlopPaymentGateway extends FcwlopPaymentGateway_parent
         $oOrder->fcwlopSetFolder('problems');
 
         try {
-            $oFcwlopPaymentModel = $oOrder->fcwlopGetPaymentModel();
-
             $iPaymentMethodId = Registry::getSession()->getVariable('fcwlop_current_payment_method_id');
 
-            /** @var FcwlopCreateHostedCheckoutRequest $oCreateHostedCheckoutRequest */
-            $oCreateHostedCheckoutRequest = $oFcwlopPaymentModel->getCreateHostedCheckoutRequest($oOrder);
+            if ($iPaymentMethodId == 0 && !empty(Registry::getSession()->getVariable('fcwlop_hosted_tokenization_id'))) {
+                $sHostedTokenizationId = Registry::getSession()->getVariable('fcwlop_hosted_tokenization_id');
 
-            $oHostedParam = $oCreateHostedCheckoutRequest->buildApiHostedParameter($iPaymentMethodId, $this->fcwlopGetRedirectUrl(), $oOrder);
-            $oCreateHostedCheckoutRequest->addHostedSpecificParameters($oHostedParam);
+                $oGetHostedTokenizationRequest = new FcwlopGetHostedTokenizationRequest();
+                $oGetHostedTokenizationRequest->setHostedTokenizationId($sHostedTokenizationId);
+                $oHostedTokenization = $oGetHostedTokenizationRequest->execute();
 
-            $oOrderParam = $oCreateHostedCheckoutRequest->buildApiOrderParameter($oOrder);
-            $oCreateHostedCheckoutRequest->addOrderParameter($oOrderParam);
+                if ($oHostedTokenization->getStatus() != 'SUCCESS') {
+                    return false;
+                }
 
-            $oResponse = $oCreateHostedCheckoutRequest->execute();
+                $aTokenData = $oHostedTokenization->getBody()['token'];
+                $iPaymentMethodId = $aTokenData['paymentProductId'];
+                $sPaymentType = FcwlopPaymentMethodCodes::fcwlopGetWorldlinePaymentType($iPaymentMethodId);
+                
+                $oCreatePaymentRequest = new FcwlopCreatePaymentRequest($oOrder);
 
-            if ($oResponse->getStatus() != 'SUCCESS') {
-                return false;
-            }
+                $oApiOrder = $oCreatePaymentRequest->buildApiOrderParameter($oOrder);
+                $oCustomer = $oCreatePaymentRequest->buildCustomerData($oOrder);
+                $oApiOrder->setCustomer($oCustomer);
+                $oCreatePaymentRequest->addOrderParameter($oApiOrder);
 
-            $aApiResponse = $oResponse->getBody();
+                $oCreatePaymentRequest->setHostedTokenizationId($sHostedTokenizationId);
+                $oCreatePaymentRequest->addCardPaymentSpecificInput($this->fcwlopGetRedirectUrl());
 
-            $oOrder->fcwlopSetTransactionId($aApiResponse['hostedCheckoutId']);
+                $oResponse = $oCreatePaymentRequest->execute();
+                
+                if ($oResponse->getStatus() != 'SUCCESS') {
+                    return false;
+                }
 
-            if (!empty($aApiResponse['redirectUrl'] && $oFcwlopPaymentModel->isRedirectUrlNeeded())) {
-                Registry::getSession()->setVariable('fcwlop_is_redirected', true);
-                Registry::getUtils()->redirect($aApiResponse['redirectUrl']);
+                $aApiResponse = $oResponse->getBody();
+
+                if (!empty($aApiResponse['payment']['id'])) {
+                    $aTransactionId = explode('_', $aApiResponse['payment']['id']);
+                    if (!empty($aTransactionId)) {
+                        $oOrder->fcwlopSetTransactionId($aTransactionId[0]);
+                    }
+                }
+                
+                if (isset($aApiResponse['merchantAction']['actionType']) && $aApiResponse['merchantAction']['actionType'] == 'REDIRECT') {
+                    $sRedirectUrl = $aApiResponse['merchantAction']['redirectData']['redirectURL'];
+                    Registry::getSession()->setVariable('fcwlop_needs_redirection', true);
+                    Registry::getSession()->setVariable('fcwlop_redirect_url', $sRedirectUrl);
+                }
+
+                return true;
+            } else {
+                $oFcwlopPaymentModel = $oOrder->fcwlopGetPaymentModel();
+
+                /** @var FcwlopCreateHostedCheckoutRequest $oCreateHostedCheckoutRequest */
+                $oCreateHostedCheckoutRequest = $oFcwlopPaymentModel->getCreateHostedCheckoutRequest($oOrder);
+
+                $oHostedParam = $oCreateHostedCheckoutRequest->buildApiHostedParameter($iPaymentMethodId, $this->fcwlopGetRedirectUrl(), $oOrder);
+                $oCreateHostedCheckoutRequest->addHostedSpecificParameters($oHostedParam);
+
+                $oOrderParam = $oCreateHostedCheckoutRequest->buildApiOrderParameter($oOrder);
+                $oCreateHostedCheckoutRequest->addOrderParameter($oOrderParam);
+
+                $oResponse = $oCreateHostedCheckoutRequest->execute();
+
+                if ($oResponse->getStatus() != 'SUCCESS') {
+                    return false;
+                }
+
+                $aApiResponse = $oResponse->getBody();
+
+                $oOrder->fcwlopSetTransactionId($aApiResponse['hostedCheckoutId']);
+
+                if (!empty($aApiResponse['redirectUrl'] && $oFcwlopPaymentModel->isRedirectUrlNeeded())) {
+                    Registry::getSession()->setVariable('fcwlop_is_redirected', true);
+                    Registry::getUtils()->redirect($aApiResponse['redirectUrl']);
+                }
             }
         } catch(\Exception $oEx) {
             $this->_iLastErrorNo = $oEx->getCode();

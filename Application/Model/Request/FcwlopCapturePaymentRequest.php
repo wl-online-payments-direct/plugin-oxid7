@@ -139,4 +139,12 @@ class FcwlopCapturePaymentRequest extends FcwlopBaseRequest
         $aParameters['references'] = $this->oApiRequest->getReferences() ? $this->oApiRequest->getReferences()->toJson() : '';
         return $aParameters;
     }
+
+    /**
+     * @return string
+     */
+    public function toJson()
+    {
+        return $this->oApiRequest->toJson();
+    }
 }

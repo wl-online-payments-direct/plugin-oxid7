@@ -166,6 +166,7 @@ $aLang = array(
     'FCWLOP_REFUND_APPROVED'                                    => 'Refund was successful',
     'FCWLOP_REFUND_FAILED'                                      => 'Error occurred during refund: ',
     'FCWLOP_REFUND_AMOUNT_GREATER_NULL'                         => 'Refunded amount has to be greater than 0',
+    'FCWLOP_REFUND_AMOUNT_LOWER_MAX'                            => 'Refunded amount has to be greater than max refundable amount',
 
     'FCWLOP_CANCEL_ORDER'                                       => 'Order cancellation',
     'FCWLOP_CANCEL_ORDER_LABEL'                                 => 'Cancel the payment ? <br />(cannot be undone)',

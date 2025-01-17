@@ -23,6 +23,10 @@
     {% set paymentExtraInfo = order.fcwlopGetExtraInfo() %}
     {% set worldlinePaymentDetails = oView.fcwlopGetWorldlinePaymentDetails() %}
 
+    {% set captureRefundEntries = oView.fcwlopGetCaptureRefundEntries() %}
+    {% set oOrderarticles = edit.getOrderArticles() %}
+    {% set aExtraPosition = edit.fcwlopGetExtraPosition() %}
+
     <form autocomplete="off" name="myedit" id="myedit" action="{{ oViewConf.getSelfLink()|raw }}" method="post">
         {{ oViewConf.getHiddenSid()|raw }}
         <input type="hidden" name="cl" value="FcwlopOrderDetails">
@@ -30,7 +34,9 @@
         <input type="hidden" name="oxid" value="{{ oxid }}">
         <input type="hidden" name="fcwlop_capture_source" value="">
         <input type="hidden" name="fcwlop_refund_source" value="">
+        <input type="hidden" id="fcwlop_refund_limit" value="{{ (captureRefundEntries.totalCapture-captureRefundEntries.totalRefund) }}" />
         <input type="hidden" id="fcwlop_error_message_capture_greater_null" value="{{ translate({ ident: "FCWLOP_CAPTURE_AMOUNT_GREATER_NULL" }) }}">
+        <input type="hidden" id="fcwlop_error_message_refund_lower_max" value="{{ translate({ ident: "FCWLOP_REFUND_AMOUNT_LOWER_MAX" }) }}">
         <input type="hidden" id="fcwlop_error_message_refund_greater_null" value="{{ translate({ ident: "FCWLOP_REFUND_AMOUNT_GREATER_NULL" }) }}">
         <input type="hidden" id="fcwlop_confirm_message" value="{{ translate({ ident: "FCWLOP_ARE_YOU_SURE" }) }}">
 
@@ -44,10 +50,6 @@
                     </td>
                 </tr>
                 {% endif %}
-
-                {% set captureRefundEntries = oView.fcwlopGetCaptureRefundEntries() %}
-                {% set oOrderarticles = edit.getOrderArticles() %}
-                {% set aExtraPosition = edit.fcwlopGetExtraPosition() %}
                 <tr>
                     <td width="45%" valign="top">
                         <fieldset style="margin: 10px 0">
@@ -437,9 +439,7 @@
                                             <tr>
                                                 <td class="edittext" colspan="2">
                                                     <input type="button"
-                                                           onclick="document.myedit.fnc.value='refund';
-                                                                    document.myedit.fcwlop_refund_source.value='by-position';
-                                                                    document.myedit.submit();
+                                                           onclick="fcwlopOnClickRefund(this, 'by-position');
                                                                     return false;"
                                                            value="{{ translate({ ident: "FCWLOP_BTN_REFUND" }) }}"
                                                            style="padding: 0 4px 0 4px;">
@@ -471,7 +471,7 @@
                                             </td>
                                             <td class="edittext">
                                                 <input id="fcwlop_refund_amount" type="text" name="refund_amount" value="0,00">
-                                                <input type="button" onclick="fcwlopOnClickRefund(this);"
+                                                <input type="button" onclick="fcwlopOnClickRefund(this, 'by-amount');"
                                                        value="{{ translate({ ident: "FCWLOP_BTN_REFUND" }) }}"
                                                        style="padding: 0 4px 0 4px;">
                                             </td>

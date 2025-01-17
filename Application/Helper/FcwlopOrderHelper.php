@@ -6,6 +6,8 @@
 
 namespace FC\FCWLOP\Application\Helper;
 
+use FC\FCWLOP\Application\Model\Payment\FcwlopPaymentMethodCodes;
+use OnlinePayments\Sdk\Domain\PaymentDetailsResponse;
 use OxidEsales\Eshop\Application\Model\Order;
 use OxidEsales\Eshop\Application\Model\Payment;
 use OxidEsales\Eshop\Core\DatabaseProvider;
@@ -229,6 +231,30 @@ class FcwlopOrderHelper
         foreach ($oOrder->getOrderArticles() as $oOrderArticle) {
             $oOrderArticle->oxorderarticles__fcwlopamountrefunded = new Field($oOrderArticle->oxorderarticles__oxbrutprice->value);
             $oOrderArticle->save();
+        }
+    }
+
+    /**
+     * @param string $sTransactionId
+     * @param Order $oOrder
+     * @param PaymentDetailsResponse $oPaymentDetails
+     * @return void
+     * @throws DatabaseConnectionException
+     */
+    public function fcwlopRestoreCardPaymentId($sTransactionId, Order $oOrder, PaymentDetailsResponse $oPaymentDetails)
+    {
+        $oCardPaymentMethodSpecificOutput = $oPaymentDetails->getPaymentOutput()->getCardPaymentMethodSpecificOutput();
+        if($oCardPaymentMethodSpecificOutput) {
+            $iProductId = $oCardPaymentMethodSpecificOutput->getPaymentProductId();
+            $sPaymentType = FcwlopPaymentMethodCodes::fcwlopGetWorldlinePaymentType($iProductId);
+            if (!is_null($sPaymentType)) {
+                $oUserPayment = $oOrder->getPaymentType();
+                $oUserPayment->oxuserpayments__oxpaymentsid = new Field($sPaymentType);
+                $oOrder->oxorder__oxpaymenttype = new Field($sPaymentType);
+
+                $oUserPayment->save();
+                $oOrder->save();
+            }    
         }
     }
 }

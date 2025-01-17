@@ -28,8 +28,46 @@ class FcwlopOrderController extends FcwlopOrderController_parent
         if (!empty($sSessChallenge) && $blFcwlopIsRedirected === true) {
             FcwlopOrderHelper::getInstance()->fcwlopCancelCurrentOrder();
         }
-        Registry::getSession()->deleteVariable('fcwlop_is_redirected');
+        FcwlopPaymentHelper::getInstance()->fcwlopCleanWorldlineSession();
         return parent::render();
+    }
+
+    /**
+     * @return string
+     */
+    public function execute()
+    {
+        $sNextStep = parent::execute();
+
+        $sPaymentId = Registry::getSession()->getVariable('paymentid');
+        if (!FcwlopPaymentHelper::getInstance()->fcwlopIsWorldlinePaymentMethod($sPaymentId)) {
+            return $sNextStep;
+        }
+        
+        $oOrder = $this->getOrder();
+        if ($oOrder) {
+            if(empty($sPaymentId)) {
+                $sPaymentId = $oOrder->getPaymentType()->oxuserpayments__oxpaymentsid->value;
+            }
+
+            if ($sPaymentId == 'fcwlopgroupedcard' && FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlineCreditCardMode() == 'embedded') {
+                $sTransactionId = $oOrder->oxorder__oxtransid->value;
+                $oPaymentDetails = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($sTransactionId);
+                FcwlopOrderHelper::getInstance()->fcwlopRestoreCardPaymentId($sTransactionId, $oOrder, $oPaymentDetails);
+            }    
+        }
+
+        if ($sNextStep == 'thankyou') {
+            $blFcwlopNeedsRedirection = Registry::getSession()->getVariable('fcwlop_needs_redirection');
+            $sRedirectUrl = Registry::getSession()->getVariable('fcwlop_redirect_url');
+
+            if ($blFcwlopNeedsRedirection && !empty($sRedirectUrl)) {
+                Registry::getSession()->setVariable('fcwlop_is_redirected', true);
+                Registry::getUtils()->redirect($sRedirectUrl);
+            }
+        }
+
+        return $sNextStep;
     }
 
     /**
@@ -72,36 +110,9 @@ class FcwlopOrderController extends FcwlopOrderController_parent
     {
         $oPayment = $this->getPayment();
         if ($oPayment && $oPayment->fcwlopIsWorldlinePaymentMethod()) {
-            $sResult = 'pending';
-
             $oOrder = $this->getOrder();
             if (!$oOrder) {
                 return $this->redirectWithError('FCWLOP_ERROR_ORDER_NOT_FOUND');
-            }
-
-            $sHostedCheckoutId = Registry::getRequest()->getRequestParameter('hostedCheckoutId');
-            $oApi = FcwlopPaymentHelper::getInstance()->fcwlopGetHostedCheckoutApi();
-            $sStatus = '';
-
-            $iCounter = 0;
-            while ($iCounter < 10 && !in_array($sStatus, ['CANCELLED_BY_CONSUMER', 'PAYMENT_CREATED'])) {
-                sleep(1);
-                $sStatus = $oApi->getHostedCheckout($sHostedCheckoutId)->getStatus();
-
-                if($sStatus == 'CANCELLED_BY_CONSUMER') {
-                    $sResult = 'canceled';
-                    break;
-                } elseif($sStatus == 'PAYMENT_CREATED') {
-                    $sResult = 'success';
-                    break;
-                }
-
-                $iCounter++;
-            }
-
-            if ($sResult == 'canceled') {
-                FcwlopOrderHelper::getInstance()->fcwlopCancelCurrentOrder();
-                return $this->redirectWithError('FCWLOP_ERROR_ORDER_CANCELED');
             }
 
             $sTransactionId = $oOrder->oxorder__oxtransid->value;
@@ -110,34 +121,55 @@ class FcwlopOrderController extends FcwlopOrderController_parent
             }
 
             $oPaymentDetails = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($sTransactionId);
-            if ($oPayment->oxpayments__oxid == 'fcwlopgroupedcard') {
-                $iProductId = $oPaymentDetails->getPaymentOutput()->getCardPaymentMethodSpecificOutput()->getPaymentProductId();
-                $sPaymentType = FcwlopPaymentMethodCodes::fcwlopGetWorldlinePaymentType($iProductId);
-                if (!is_null($sPaymentType)) {
-                    $oUserPayment = $oOrder->getPaymentType();
-                    $oUserPayment->oxuserpayments__oxpaymentsid = new Field($sPaymentType);
-                    $oOrder->oxorder__oxpaymenttype = new Field($sPaymentType);
-
-                    $oUserPayment->save();
-                    $oOrder->save();
-                }
+            if ($oPayment->getId() == 'fcwlopgroupedcard') {
+                FcwlopOrderHelper::getInstance()->fcwlopRestoreCardPaymentId($sTransactionId, $oOrder, $oPaymentDetails);
             }
 
-            if($sResult == 'success') {
-                if ($oPaymentDetails->getStatus() == 'REJECTED') {
+            $sHostedCheckoutId = Registry::getRequest()->getRequestParameter('hostedCheckoutId');
+            if (!empty($sHostedCheckoutId)) {
+                $sResult = 'pending';
+
+                $oApi = FcwlopPaymentHelper::getInstance()->fcwlopGetHostedCheckoutApi();
+                $sStatus = '';
+
+                $iCounter = 0;
+                while ($iCounter < 10 && !in_array($sStatus, ['CANCELLED_BY_CONSUMER', 'PAYMENT_CREATED'])) {
+                    sleep(1);
+                    $sStatus = $oApi->getHostedCheckout($sHostedCheckoutId)->getStatus();
+
+                    if($sStatus == 'CANCELLED_BY_CONSUMER') {
+                        $sResult = 'canceled';
+                        break;
+                    } elseif($sStatus == 'PAYMENT_CREATED') {
+                        $sResult = 'success';
+                        break;
+                    }
+
+                    $iCounter++;
+                }
+
+                if ($sResult == 'canceled') {
                     FcwlopOrderHelper::getInstance()->fcwlopCancelCurrentOrder();
-                    return $this->redirectWithError('FCWLOP_ERROR_ORDER_FAILED');
+                    return $this->redirectWithError('FCWLOP_ERROR_ORDER_CANCELED');
+                }
+
+                if($sResult == 'success') {
+                    if ($oPaymentDetails->getStatus() == 'REJECTED') {
+                        FcwlopOrderHelper::getInstance()->fcwlopCancelCurrentOrder();
+                        return $this->redirectWithError('FCWLOP_ERROR_ORDER_FAILED');
+                    }
+                }
+
+                if ($sResult == 'pending') {
+                    return 'thankyou?pendingCheckout=1';
                 }
             }
 
-            if ($sResult == 'pending') {
-                return 'thankyou?pendingCheckout=1';
-            }
-
-            Registry::getSession()->deleteVariable('fcwlop_is_redirected');
+            FcwlopPaymentHelper::getInstance()->fcwlopCleanWorldlineSession();
 
             // else - continue to parent::execute since success must be true
         }
+
         return parent::execute();
     }
 }

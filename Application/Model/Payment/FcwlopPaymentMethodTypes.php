@@ -54,7 +54,7 @@ class FcwlopPaymentMethodTypes
         'fcwlopupi' => 'UPI - UnionPay International',
         'fcwlopvisa' => 'Visa',
         'fcwlopwechatpay' => 'WeChat Pay',
-        'fcwlopgroupedcard' => 'Credit Card',
+        'fcwlopgroupedcard' => 'Credit Card'
     ];
 
     /**

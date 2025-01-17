@@ -6,6 +6,7 @@
 
 namespace FC\FCWLOP\Application\Model\Payment;
 
+use FC\FCWLOP\Application\Model\Payment\Methods\FcwlopWorldlineGenericCardMethod;
 use FC\FCWLOP\Application\Model\Payment\Methods\FcwlopWorldlineGenericMethod;
 use FC\FCWLOP\Application\Model\Payment\Methods\FcwlopWorldlineGroupedCardMethod;
 

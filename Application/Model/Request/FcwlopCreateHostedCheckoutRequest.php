@@ -161,4 +161,12 @@ class FcwlopCreateHostedCheckoutRequest extends FcwlopBaseRequest
         $aParameters['surchargeSpecificInput'] = $oApiOrder->getSurchargeSpecificInput() ? $oApiOrder->getSurchargeSpecificInput()->toJson() : '';
         return $aParameters;
     }
+
+    /**
+     * @return string
+     */
+    public function toJson()
+    {
+        return $this->oApiRequest->toJson();
+    }
 }

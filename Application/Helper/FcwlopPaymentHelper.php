@@ -7,22 +7,28 @@
 namespace FC\FCWLOP\Application\Helper;
 
 use Exception;
+use FC\FCWLOP\Application\Model\Payment\Methods\FcwlopWorldlineGenericCardMethod;
 use FC\FCWLOP\Application\Model\Payment\Methods\FcwlopWorldlineGenericMethod;
 use FC\FCWLOP\Application\Model\Payment\FcwlopPaymentMethodCodes;
 use FC\FCWLOP\Application\Model\Payment\FcwlopPaymentMethodModels;
 use FC\FCWLOP\Application\Model\Payment\FcwlopPaymentMethodTypes;
 use FC\FCWLOP\Application\Model\Request\FcwlopCancelPaymentRequest;
 use FC\FCWLOP\Application\Model\Request\FcwlopCapturePaymentRequest;
+use FC\FCWLOP\Application\Model\Request\FcwlopCreateHostedTokenizationRequest;
 use FC\FCWLOP\Application\Model\Request\FcwlopRefundRequest;
 use OnlinePayments\Sdk\Client;
 use OnlinePayments\Sdk\Communicator;
 use OnlinePayments\Sdk\CommunicatorConfiguration;
 use OnlinePayments\Sdk\DataObject;
 use OnlinePayments\Sdk\DefaultConnection;
+use OnlinePayments\Sdk\Domain\CreateHostedTokenizationRequest;
 use OnlinePayments\Sdk\Domain\PaymentDetailsResponse;
 use OnlinePayments\Sdk\Domain\PaymentProduct;
+use OnlinePayments\Sdk\Domain\PaymentProductFilterHostedTokenization;
+use OnlinePayments\Sdk\Domain\PaymentProductFiltersHostedTokenization;
 use OnlinePayments\Sdk\Domain\TestConnection;
 use OnlinePayments\Sdk\Merchant\HostedCheckout\HostedCheckoutClient;
+use OnlinePayments\Sdk\Merchant\HostedTokenization\HostedTokenizationClient;
 use OnlinePayments\Sdk\Merchant\MerchantClient;
 use OnlinePayments\Sdk\Merchant\Payments\PaymentsClient;
 use OnlinePayments\Sdk\Merchant\Products\GetPaymentProductsParams;
@@ -30,6 +36,8 @@ use OnlinePayments\Sdk\Webhooks\InMemorySecretKeyStore;
 use OnlinePayments\Sdk\Webhooks\WebhooksHelper;
 use OxidEsales\Eshop\Application\Model\Order;
 use OxidEsales\Eshop\Application\Model\OrderArticle;
+use OxidEsales\Eshop\Application\Model\Payment;
+use OxidEsales\Eshop\Application\Model\User;
 use OxidEsales\Eshop\Core\DatabaseProvider;
 use OxidEsales\Eshop\Core\Exception\DatabaseConnectionException;
 use OxidEsales\Eshop\Core\Exception\DatabaseErrorException;
@@ -102,6 +110,12 @@ class FcwlopPaymentHelper
     {
         if ($this->fcwlopIsWorldlinePaymentMethod($sPaymentId) === false || !in_array($sPaymentId, array_keys(FcwlopPaymentMethodModels::WORLDLINE_PAYMENT_MODELS))) {
             throw new Exception('Worldline Payment method unknown - '.$sPaymentId);
+        }
+
+        if ($sPaymentId == 'fcwlopgroupedcard' &&
+            FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlineCreditCardMode() == 'embedded'
+        ) {
+            return oxNew(FcwlopWorldlineGenericCardMethod::class);
         }
 
         $sModel = FcwlopPaymentMethodModels::fcwlopGetWorldlineMethodModel($sPaymentId);
@@ -259,9 +273,8 @@ class FcwlopPaymentHelper
                     ':groupid' => $sGroupId,
                 ]);
             }
-
-            FcwlopDatabaseHelper::insertRowIfNotExists('oxobject2payment', array('OXPAYMENTID' => $sOxid, 'OXTYPE' => 'oxdelset'), "INSERT INTO oxobject2payment(OXID,OXPAYMENTID,OXOBJECTID,OXTYPE) values (REPLACE(UUID(),'-',''), :paymentid, 'oxidstandard', 'oxdelset');", [':paymentid' => $sOxid]);
         }
+        FcwlopDatabaseHelper::insertRowIfNotExists('oxobject2payment', array('OXPAYMENTID' => $sOxid, 'OXTYPE' => 'oxdelset'), "INSERT INTO oxobject2payment(OXID,OXPAYMENTID,OXOBJECTID,OXTYPE) values (REPLACE(UUID(),'-',''), :paymentid, 'oxidstandard', 'oxdelset');", [':paymentid' => $sOxid]);
     }
 
     /**
@@ -298,6 +311,10 @@ class FcwlopPaymentHelper
         $aCaptures = [];
         $oPaymentCaptures = $this->fcwlopLoadWorldlineApi()->payments()->getCaptures($sPaymentId);
         foreach ($oPaymentCaptures->getCaptures() as $oCapture) {
+            if ($oCapture->getStatus() != 'CAPTURED') {
+                continue;
+            }
+
             $aCaptures[$oCapture->getId()] = [
                 'date' => $aDbTransaction['FCWLOP_TIME'],
                 'amount' => $oCapture->getCaptureOutput()->getAcquiredAmount()->getAmount(),
@@ -326,6 +343,10 @@ class FcwlopPaymentHelper
         $aRefunds = [];
         $oPaymentRefunds = $this->fcwlopLoadWorldlineApi()->payments()->getRefunds($sPaymentId);
         foreach ($oPaymentRefunds->getRefunds() as $oRefundResponse) {
+            if ($oRefundResponse->getStatus() != 'REFUNDED') {
+                continue;
+            }
+            
             $oRefundOutput = $oRefundResponse->getRefundOutput();
             $aRefunds[$oRefundResponse->getId()] = [
                 'date' => $aDbTransaction['FCWLOP_TIME'],
@@ -385,6 +406,16 @@ class FcwlopPaymentHelper
         $oApi = $this->fcwlopLoadWorldlineApi();
 
         return $oApi->payments();
+    }
+
+    /**
+     * @return HostedTokenizationClient
+     */
+    public function fcwlopGetHostedTokenizationApi()
+    {
+        $oApi = $this->fcwlopLoadWorldlineApi();
+
+        return $oApi->hostedTokenization();
     }
 
     /**
@@ -532,6 +563,52 @@ class FcwlopPaymentHelper
     }
 
     /**
+     * @var $oPaymentList
+     * @return FcwlopCreateHostedTokenizationRequest
+     */
+    public function fcwlopGetCreateHostedTokenizationRequest($oPaymentList)
+    {
+        $oCreateHostedTokenizationRequest = new FcwlopCreateHostedTokenizationRequest();
+
+        $oUser = Registry::getSession()->getBasket()->getBasketUser();
+        $sLocale = FcwlopPaymentHelper::getInstance()->fcwlopGetLocale($oUser);
+        $oCreateHostedTokenizationRequest->setLocale($sLocale);
+
+        $oCreateHostedTokenizationRequest->setAskConsumerConsent(false);
+
+        $aActiveCardBrands = [];
+        foreach ($oPaymentList as $sOxid => $oMethod) {
+            if ($this->fcwlopIsWorldlineCardsProduct($sOxid)) {
+                if ($oMethod->oxpayments__oxactive == 1) {
+                    $aActiveCardBrands[] = $oMethod->oxpayments__fcwlopextid;
+                }
+            }
+        }
+        $oPaymentProductFilters = new PaymentProductFiltersHostedTokenization();
+        $oRestrictFilter = new PaymentProductFilterHostedTokenization();
+        $oRestrictFilter->setProducts($aActiveCardBrands);
+        $oPaymentProductFilters->setRestrictTo($oRestrictFilter);
+        
+        $oCreateHostedTokenizationRequest->setPaymentProductFilters($oPaymentProductFilters);
+        
+        return $oCreateHostedTokenizationRequest;
+    }
+
+    /**
+     * @param User $oUser
+     * @return string
+     */
+    public function fcwlopGetLocale(User $oUser)
+    {
+        $aAvailableLanguages = Registry::getLang()->getActiveShopLanguageIds();
+        $iCurrentLangId = Registry::getConfig()->getActiveShop()->getLanguage();
+        $sCurrentLang = $aAvailableLanguages[$iCurrentLangId] ?? 'de';
+        $sCurrentCountry = FcwlopOrderHelper::getInstance()->fcwlopGetCountryCode($oUser->oxuser__oxcountryid->value) ?? 'DE';
+
+        return $sCurrentLang.'_'.$sCurrentCountry;
+    }
+
+    /**
      * @param Order $oOrder
      * @param array $aPositions
      * @return void
@@ -569,6 +646,43 @@ class FcwlopPaymentHelper
                 }
             }
         }
+    }
+
+    public function fcwlopGetApiEndpoint($sMode = '')
+    {
+        $sMode = empty($sMode) ? $this->fcwlopGetWorldlineMode() : $sMode;
+        return $sMode == 'live' ?
+            $this->fcwlopGetWorldlineApiLiveEndpoint() :
+            $this->fcwlopGetWorldlineApiSandboxEndpoint();
+    }
+
+    /**
+     * @return void
+     */
+    public function fcwlopCleanWorldlineSession()
+    {
+        Registry::getSession()->deleteVariable('fcwlop_needs_redirection');
+        Registry::getSession()->deleteVariable('fcwlop_redirect_url');
+        Registry::getSession()->deleteVariable('fcwlop_is_redirected');
+        Registry::getSession()->deleteVariable('fcwlop_hosted_tokenization_id');
+    }
+
+    /**
+     * @return array
+     */
+    public function fcwlopGetActivatedCreditCards()
+    {
+        $aActivatedCards = [];
+        
+        foreach (array_keys(FcwlopPaymentMethodTypes::WORLDLINE_CARDS_PRODUCTS) as $sOxid) {
+            $oMethod = oxNew(Payment::class);
+            $oMethod->load($sOxid);
+            if ($oMethod && $oMethod->oxpayments__oxactive->value == 1) {
+                $aActivatedCards[] = $sOxid;
+            }
+        }
+
+        return $aActivatedCards;
     }
 
     /**

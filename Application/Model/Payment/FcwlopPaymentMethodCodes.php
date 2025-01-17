@@ -54,7 +54,7 @@ class FcwlopPaymentMethodCodes
         'fcwlopupi' => 56,
         'fcwlopvisa' => 1,
         'fcwlopwechatpay' => 5404,
-        'fcwlopgroupedcard' => 0,
+        'fcwlopgroupedcard' => 0
     ];
 
     /**

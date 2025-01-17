@@ -129,7 +129,7 @@ $aLang = array(
     'FCWLOP_CAPTURED_AMOUNT_TOTAL'                              => 'Gesamt',
     'FCWLOP_REFUNDED_AMOUNT'                                    => 'Rückerstatteter Betrag',
     'FCWLOP_REFUNDED_AMOUNT_TOTAL'                              => 'Gesamt',
-    'FCWLOP_BALANCE'                                            => 'Salod',
+    'FCWLOP_BALANCE'                                            => 'Saldo',
     'FCWLOP_PREAUTHORIZED_AMOUNT'                               => 'Vorautorisierter Betrag',
     'FCWLOP_CAPTURE_AMOUNT_GREATER_NULL'                        => 'Erfasster Betrag muss größer als 0 sein',
     'FCWLOP_ARE_YOU_SURE'                                       => 'Sind Sie sicher, dass Sie diese Aktion ausführen möchten?',
@@ -166,6 +166,7 @@ $aLang = array(
     'FCWLOP_REFUND_APPROVED'                                    => 'Rückerstattung war erfolgreich',
     'FCWLOP_REFUND_FAILED'                                      => 'Bei der Rückerstattung ist ein Fehler aufgetreten: ',
     'FCWLOP_REFUND_AMOUNT_GREATER_NULL'                         => 'Rückerstattungsbetrag muss größer als 0 sein',
+    'FCWLOP_REFUND_AMOUNT_LOWER_MAX'                            => 'Rückerstattungsbetrag darf nicht größer als Rückerstattungsfähiger Betrag sein',
 
     'FCWLOP_CANCEL_ORDER'                                       => 'Zahlungsstornierung',
     'FCWLOP_CANCEL_ORDER_LABEL'                                 => 'Zahlung stornieren? <br />(kann nicht rückgängig gemacht werden)',

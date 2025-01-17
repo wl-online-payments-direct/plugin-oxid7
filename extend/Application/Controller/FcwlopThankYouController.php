@@ -12,6 +12,15 @@ use OxidEsales\Eshop\Core\Registry;
 class FcwlopThankYouController extends FcwlopThankYouController_parent
 {
     /**
+     * Delete session variable after order finish
+     */
+    public function render()
+    {
+        FcwlopPaymentHelper::getInstance()->fcwlopCleanWorldlineSession();
+        return parent::render();
+    }
+    
+    /**
      * @return bool
      */
     public function fcwlopIsWorldlinePaymentMethod()
