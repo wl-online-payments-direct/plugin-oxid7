@@ -46,8 +46,80 @@ class FcwlopPaymentController extends FcwlopPaymentController_parent
         parent::getPaymentList();
 
         $this->fcwlopGroupCards();
+        $this->fcwlopCheckApplePay();
 
         return $this->_oPaymentList;
+    }
+
+    /**
+     * @return string
+     */
+    public function validatepayment()
+    {
+        $mRet = parent::validatepayment();
+
+        $sPaymentId = Registry::getRequest()->getRequestParameter('paymentid');
+        if (!FcwlopPaymentHelper::getInstance()->fcwlopIsWorldlinePaymentMethod($sPaymentId)) {
+            return $mRet;
+        }
+        try {
+            if ($sPaymentId == 'fcwlopgroupedcard') {
+                $mRet = 'order';
+            }
+
+            $oFcwlopPaymentModel = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentModel($sPaymentId);
+            if (!is_null($oFcwlopPaymentModel->getWorldlinePaymentCode())) {
+                Registry::getSession()->setVariable('fcwlop_current_payment_method_id', $oFcwlopPaymentModel->getWorldlinePaymentCode());
+            }    
+        } catch (\Exception $oEx) {
+            Registry::getLogger()->error($oEx->getTraceAsString());
+            $mRet = 'payment';
+        }
+
+        return $mRet;
+    }
+
+    /**
+     * @return string
+     */
+    public function fcwlopGetTokenizationJsToolsUrl()
+    {
+        $sApiUrl = FcwlopPaymentHelper::getInstance()->fcwlopGetApiEndpoint();
+        
+        return $sApiUrl . '/hostedtokenization/js/client/tokenizer.min.js';
+    }
+
+    /**
+     * @return string
+     */
+    public function fcwlopGetCardTokenizationUrl()
+    {
+        try {
+            $oCreateHostedTokenizationRequest = FcwlopPaymentHelper::getInstance()->fcwlopGetCreateHostedTokenizationRequest();
+            $oResponse = $oCreateHostedTokenizationRequest->execute();
+
+            if ($oResponse->getStatus() != 'SUCCESS') {
+                return '';
+            }
+
+            Registry::getSession()->setVariable('fcwlop_hosted_tokenization_id', $oResponse->getBody()['hostedTokenizationId']);
+            Registry::getSession()->setVariable('fcwlop_hosted_tokenization_url', $oResponse->getBody()['hostedTokenizationUrl']);
+
+            return $oResponse->getBody()['hostedTokenizationUrl'];
+        } catch (\Exception $oEx) {
+            Registry::getLogger()->error($oEx->getMessage());
+            return '';
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public function fcwlopGetAllowedCardLogos()
+    {
+        $aCardsLogos = FcwlopPaymentHelper::getInstance()->fcwlopGetActivatedCreditCardsLogos();
+
+        return $aCardsLogos;
     }
 
     /**
@@ -100,68 +172,30 @@ class FcwlopPaymentController extends FcwlopPaymentController_parent
     }
 
     /**
-     * @return string
+     * @return bool
      */
-    public function validatepayment()
+    protected function fcwlopCheckApplePay()
     {
-        $mRet = parent::validatepayment();
-
-        $sPaymentId = Registry::getRequest()->getRequestParameter('paymentid');
-        if (!FcwlopPaymentHelper::getInstance()->fcwlopIsWorldlinePaymentMethod($sPaymentId)) {
-            return $mRet;
+        $blFcwlopHideApplePay = false;
+        if (!$this->_oPaymentList['fcwlopapplepay']) {
+            return true;
         }
-        try {
-            if ($sPaymentId == 'fcwlopgroupedcard') {
-                $mRet = 'order';
-            }
+        $oFcwlopApplePayMethod = $this->_oPaymentList['fcwlopapplepay'];
 
-            $oFcwlopPaymentModel = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentModel($sPaymentId);
-            if (!is_null($oFcwlopPaymentModel->getWorldlinePaymentCode())) {
-                Registry::getSession()->setVariable('fcwlop_current_payment_method_id', $oFcwlopPaymentModel->getWorldlinePaymentCode());
-            }    
-        } catch (\Exception $oEx) {
-            Registry::getLogger()->error($oEx->getTraceAsString());
-            $mRet = 'payment';
+        if ($oFcwlopApplePayMethod->oxpayments__oxactive->value != 1) {
+            $blFcwlopHideApplePay = true;
         }
 
-        return $mRet;
-    }
-
-    /**
-     * @return string
-     */
-    public function fcwlopGetTokenizationJsToolsUrl()
-    {
-        $sApiUrl = FcwlopPaymentHelper::getInstance()->fcwlopGetApiEndpoint();
-        
-        return $sApiUrl . '/hostedtokenization/js/client/tokenizer.min.js';
-    }
-
-    /**
-     * @return string
-     */
-    public function fcwlopGetCardTokenizationUrl()
-    {
-        try {
-            if (!empty(Registry::getSession()->getVariable('fcwlop_hosted_tokenization_url'))) {
-                return Registry::getSession()->getVariable('fcwlop_hosted_tokenization_url');
-            }
-            
-            $oCreateHostedTokenizationRequest = FcwlopPaymentHelper::getInstance()->fcwlopGetCreateHostedTokenizationRequest(parent::getPaymentList());
-            $oResponse = $oCreateHostedTokenizationRequest->execute();
-
-            if ($oResponse->getStatus() != 'SUCCESS') {
-                return '';
-            }
-
-            Registry::getSession()->setVariable('fcwlop_hosted_tokenization_id', $oResponse->getBody()['hostedTokenizationId']);
-            Registry::getSession()->setVariable('fcwlop_hosted_tokenization_url', $oResponse->getBody()['hostedTokenizationUrl']);
-
-            return $oResponse->getBody()['hostedTokenizationUrl'];
-        } catch (\Exception $oEx) {
-            Registry::getLogger()->error($oEx->getMessage());
-            return '';
+        $sUserAgent = Registry::getUtilsServer()->getServerVar('HTTP_USER_AGENT');
+        if (!str_contains(strtolower($sUserAgent), 'safari')) {
+            $blFcwlopHideApplePay = true;
         }
+
+        if ($blFcwlopHideApplePay) {
+            unset($this->_oPaymentList['fcwlopapplepay']);
+        }
+
+        return true;
     }
 
     /**

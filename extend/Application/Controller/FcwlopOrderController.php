@@ -28,7 +28,7 @@ class FcwlopOrderController extends FcwlopOrderController_parent
         if (!empty($sSessChallenge) && $blFcwlopIsRedirected === true) {
             FcwlopOrderHelper::getInstance()->fcwlopCancelCurrentOrder();
         }
-        FcwlopPaymentHelper::getInstance()->fcwlopCleanWorldlineSession();
+        Registry::getSession()->deleteVariable('fcwlop_is_redirected');
         return parent::render();
     }
 

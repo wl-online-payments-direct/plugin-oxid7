@@ -1,6 +1,7 @@
 {% set oPaymentModel = paymentmethod.fcwlopGetWorldlinePaymentModel() %}
 {% set sHostedTokenizationUrl = oView.fcwlopGetCardTokenizationUrl() %}
 {% set sTokenizationJsToolsUrl = oView.fcwlopGetTokenizationJsToolsUrl() %}
+{% set aAllowedCardsLogos = oView.fcwlopGetAllowedCardLogos() %}
 
 <input type="hidden" name="dynvalue[fcwlop_token_id]" id="fcwlop_token_id">
 <div id="fcwlop_creditcard_error_box" class="form-group" style="display:none;">
@@ -8,6 +9,12 @@
     <div class="mb-3">
         <div class="form-control" style="background-color:#ff5959" id="fcwlop_creditcard_error">{{ translate({ ident: "ERROR" }) }}</div>
     </div>
+</div>
+
+<div class="fcwlop_creditcard_allowed_logos">
+    {% for entry in aAllowedCardsLogos %}
+        <img style="height: 30px; width: auto" src="{{ entry.logo }}" alt="{{ entry.brand }}" />
+    {% endfor %}
 </div>
 
 <div class="form-group">

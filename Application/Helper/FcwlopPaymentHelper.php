@@ -563,10 +563,9 @@ class FcwlopPaymentHelper
     }
 
     /**
-     * @var $oPaymentList
      * @return FcwlopCreateHostedTokenizationRequest
      */
-    public function fcwlopGetCreateHostedTokenizationRequest($oPaymentList)
+    public function fcwlopGetCreateHostedTokenizationRequest()
     {
         $oCreateHostedTokenizationRequest = new FcwlopCreateHostedTokenizationRequest();
 
@@ -576,17 +575,17 @@ class FcwlopPaymentHelper
 
         $oCreateHostedTokenizationRequest->setAskConsumerConsent(false);
 
-        $aActiveCardBrands = [];
-        foreach ($oPaymentList as $sOxid => $oMethod) {
-            if ($this->fcwlopIsWorldlineCardsProduct($sOxid)) {
-                if ($oMethod->oxpayments__oxactive == 1) {
-                    $aActiveCardBrands[] = $oMethod->oxpayments__fcwlopextid;
-                }
-            }
+        $aActiveCardBrands = FcwlopPaymentHelper::getInstance()->fcwlopGetActivatedCreditCards();
+
+        $aFilteredCardProducts = [];
+        foreach ($aActiveCardBrands as $sOxid) {
+            $oMethod = oxNew(Payment::class);
+            $oMethod->load($sOxid);
+            $aFilteredCardProducts[] = $oMethod->oxpayments__fcwlopextid->value;
         }
         $oPaymentProductFilters = new PaymentProductFiltersHostedTokenization();
         $oRestrictFilter = new PaymentProductFilterHostedTokenization();
-        $oRestrictFilter->setProducts($aActiveCardBrands);
+        $oRestrictFilter->setProducts($aFilteredCardProducts);
         $oPaymentProductFilters->setRestrictTo($oRestrictFilter);
         
         $oCreateHostedTokenizationRequest->setPaymentProductFilters($oPaymentProductFilters);
@@ -661,6 +660,7 @@ class FcwlopPaymentHelper
      */
     public function fcwlopCleanWorldlineSession()
     {
+        Registry::getSession()->deleteVariable('fcwlop_hosted_tokenization_url');
         Registry::getSession()->deleteVariable('fcwlop_needs_redirection');
         Registry::getSession()->deleteVariable('fcwlop_redirect_url');
         Registry::getSession()->deleteVariable('fcwlop_is_redirected');
@@ -683,6 +683,27 @@ class FcwlopPaymentHelper
         }
 
         return $aActivatedCards;
+    }
+
+    /**
+     * @return array
+     */
+    public function fcwlopGetActivatedCreditCardsLogos()
+    {
+        $aActivatedCardsLogos = [];
+
+        foreach (array_keys(FcwlopPaymentMethodTypes::WORLDLINE_CARDS_PRODUCTS) as $sOxid) {
+            $oMethod = oxNew(Payment::class);
+            $oMethod->load($sOxid);
+            if ($oMethod && $oMethod->oxpayments__oxactive->value == 1) {
+                $aActivatedCardsLogos[] = [
+                    'brand' => $oMethod->oxpayments__oxdesc->value,
+                    'logo' => $oMethod->oxpayments__fcwlopextlogo->value
+                ];
+            }
+        }
+
+        return $aActivatedCardsLogos;
     }
 
     /**
