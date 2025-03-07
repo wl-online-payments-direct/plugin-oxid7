@@ -159,6 +159,7 @@ class FcwlopCreateHostedCheckoutRequest extends FcwlopBaseRequest
         $aParameters['shipping'] = $oApiOrder->getShipping() ? $oApiOrder->getShipping()->toJson() : '';
         $aParameters['shoppingCart'] = $oApiOrder->getShoppingCart() ? $oApiOrder->getShoppingCart()->toJson() : '';
         $aParameters['surchargeSpecificInput'] = $oApiOrder->getSurchargeSpecificInput() ? $oApiOrder->getSurchargeSpecificInput()->toJson() : '';
+        $aParameters['apiRequest'] = $this->oApiRequest ? $this->oApiRequest->toJson() : '';
         return $aParameters;
     }
 

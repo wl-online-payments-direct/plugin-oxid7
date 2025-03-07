@@ -307,18 +307,23 @@ class FcwlopOrder extends FcwlopOrder_parent
      */
     public function fcwlopAllowCancel(): bool
     {
-        $blReturn = true;
+        try{
+            $blReturn = true;
 
-        if ($this->oxorder__oxstorno->value == 1) {
-            $blReturn = false;
+            if ($this->oxorder__oxstorno->value == 1) {
+                $blReturn = false;
+            }
+
+            if ($blReturn) {
+                $oWorldlinePayment = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($this->oxorder__oxtransid->value);
+                $blReturn = $oWorldlinePayment->getStatusOutput()->getIsCancellable();
+            }
+
+            return $blReturn;
+        } catch (\Exception $oEx) {
+            return false;
         }
 
-        if ($blReturn) {
-            $oWorldlinePayment = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($this->oxorder__oxtransid->value);
-            $blReturn = $oWorldlinePayment->getStatusOutput()->getIsCancellable();
-        }
-
-        return $blReturn;
     }
 
     /**

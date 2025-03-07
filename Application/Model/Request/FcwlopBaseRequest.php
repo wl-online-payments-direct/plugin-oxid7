@@ -9,6 +9,7 @@ namespace FC\FCWLOP\Application\Model\Request;
 use Exception;
 use FC\FCWLOP\Application\Helper\FcwlopOrderHelper;
 use OnlinePayments\Sdk\Domain\Address;
+use OnlinePayments\Sdk\Domain\AddressPersonal;
 use OnlinePayments\Sdk\Domain\AmountOfMoney;
 use OnlinePayments\Sdk\Domain\CompanyInformation;
 use OnlinePayments\Sdk\Domain\ContactDetails;
@@ -19,6 +20,8 @@ use OnlinePayments\Sdk\Domain\LineItemInvoiceData;
 use OnlinePayments\Sdk\Domain\Order;
 use OnlinePayments\Sdk\Domain\OrderLineDetails;
 use OnlinePayments\Sdk\Domain\OrderReferences;
+use OnlinePayments\Sdk\Domain\PersonalInformation;
+use OnlinePayments\Sdk\Domain\PersonalName;
 use OnlinePayments\Sdk\Domain\Shipping;
 use OnlinePayments\Sdk\Domain\ShippingMethod;
 use OnlinePayments\Sdk\Domain\ShoppingCart;
@@ -80,10 +83,8 @@ abstract class FcwlopBaseRequest
 
         $oShipping = new Shipping();
 
-        $oShippingAddress = $this->buildApiShippingAddress($oCoreOrder);
-        if(empty($oShippingAddress->getCity())) {
-            $oShippingAddress = $this->buildApiBillingAddress($oCoreOrder);
-        }
+        $oShippingAddress = $this->buildApiShippingAddress($oCoreOrder, true);
+
         $oShipping->setAddress($oShippingAddress);
         $aDeliveryCostDetails = $this->buildApiDeliveryCostDetails($oCoreOrder);
         $oShipping->setShippingCost($aDeliveryCostDetails['cost']);
@@ -144,6 +145,7 @@ abstract class FcwlopBaseRequest
     {
         $oCustomer = new Customer();
 
+        $oCustomer->setPersonalInformation($this->buildApiPersonalInformation($oCoreUser));
         $oCustomer->setContactDetails($this->buildApiContactDetails($oCoreUser));
         $oCustomer->setBillingAddress($this->buildApiBillingAddress($oCoreOrder));
         if (!empty($oCoreOrder->oxorder__oxbillcompany->value)) {
@@ -159,6 +161,24 @@ abstract class FcwlopBaseRequest
         $oCustomer->setLocale(FcwlopOrderHelper::getInstance()->fcwlopGetLocale($oCoreOrder));
 
         return $oCustomer;
+    }
+
+    /**
+     * Returns filled API PersonalInformation object for customer
+     *
+     * @param CoreUser $oCoreUser
+     * @return PersonalInformation
+     */
+    protected function buildApiPersonalInformation(CoreUser $oCoreUser)
+    {
+        $oPersonalName = new PersonalName();
+        $oPersonalName->setFirstName($this->getCustomerFirstName($oCoreUser));
+        $oPersonalName->setSurname($this->getCustomerLastName($oCoreUser));
+
+        $oPersonalInformation = new PersonalInformation();
+        $oPersonalInformation->setName($oPersonalName);
+
+        return $oPersonalInformation;
     }
 
     /**
@@ -198,19 +218,40 @@ abstract class FcwlopBaseRequest
      * Returns filled API Address object for Shipping
      *
      * @param CoreOrder $oOrder
+     * @param boolean $blUseBillingIfEmpty
      * @return Address
      */
-    protected function buildApiShippingAddress(CoreOrder $oOrder)
+    protected function buildApiShippingAddress(CoreOrder $oOrder, $blUseBillingIfEmpty = false)
     {
-        $aShippingAddressDetails = [
-            'street' => trim($oOrder->oxorder__oxdelstreet->value),
-            'housenr' => trim($oOrder->oxorder__oxdelstreetnr->value),
-            'additional' => trim($oOrder->oxorder__oxdeladdinfo->value),
-            'zip' => $oOrder->oxorder__oxdelzip->value,
-            'city' => $oOrder->oxorder__oxdelcity->value,
-            'countryCode' => FcwlopOrderHelper::getInstance()->fcwlopGetCountryCode($oOrder->oxorder__oxdelcountryid->value)
-        ];
-        return $this->fillApiAddress($aShippingAddressDetails);
+        if (empty($oOrder->oxorder__oxdelcity->value) && $blUseBillingIfEmpty) {
+            $oBasicAddress = $this->buildApiBillingAddress($oOrder);
+        } else {
+            $aShippingAddressDetails = [
+                'street' => trim($oOrder->oxorder__oxdelstreet->value),
+                'housenr' => trim($oOrder->oxorder__oxdelstreetnr->value),
+                'additional' => trim($oOrder->oxorder__oxdeladdinfo->value),
+                'zip' => $oOrder->oxorder__oxdelzip->value,
+                'city' => $oOrder->oxorder__oxdelcity->value,
+                'countryCode' => FcwlopOrderHelper::getInstance()->fcwlopGetCountryCode($oOrder->oxorder__oxdelcountryid->value)
+            ];
+            $oBasicAddress = $this->fillApiAddress($aShippingAddressDetails);
+        }
+
+        $oAddressPersonal = new AddressPersonal();
+        $oAddressPersonal->fromJson($oBasicAddress->toJson());
+
+        $oPersonalName = new PersonalName();
+        $oPersonalName->setFirstName($oOrder->oxorder__oxdelfname->value ?? $oOrder->oxorder__oxbillfname->value);
+        $oPersonalName->setSurname($oOrder->oxorder__oxdellname->value ?? $oOrder->oxorder__oxbilllname->value);
+        $oAddressPersonal->setName($oPersonalName);
+
+        if (!empty($oOrder->oxorder__oxdelcompany->value)) {
+            $oAddressPersonal->setCompanyName($oOrder->oxorder__oxdelcompany->value);
+        } elseif (!empty($oOrder->oxorder__oxbillcompany->value)) {
+            $oAddressPersonal->setCompanyName($oOrder->oxorder__oxbillcompany->value);
+        }
+
+        return $oAddressPersonal;
     }
 
     /**
@@ -330,6 +371,24 @@ abstract class FcwlopBaseRequest
         $oAddress->setCountryCode($aAdressData['countryCode'] ?? '');
 
         return $oAddress;
+    }
+
+    /**
+     * @param CoreUser $oCoreUser
+     * @return string
+     */
+    protected function getCustomerFirstName(CoreUser $oCoreUser)
+    {
+        return $oCoreUser->oxuser__oxfname->value;
+    }
+
+    /**
+     * @param CoreUser $oCoreUser
+     * @return string
+     */
+    protected function getCustomerLastName(CoreUser $oCoreUser)
+    {
+        return $oCoreUser->oxuser__oxlname->value;
     }
 
     /**
