@@ -170,7 +170,23 @@ class FcwlopCronBase
     {
         FcwlopCronjob::getInstance()->markCronjobAsFinished($this->getCronjobId());
         if ($blResult === false) {
-            error_log('Cron "'.$this->getCronjobId().'" failed'.($sError !== false ? " (Error: ".$sError.")" : ""), getShopBasePath().'/log/'.$this->sLogFileName);
+            $this->logResult('Cron "' . $this->getCronjobId() . '" failed' . ($sError !== false ? " (Error: ".$sError.")" : ""));
+        }
+    }
+
+    /**
+     * Log cronjob error to log file if enabled
+     *
+     * @param array $aResult
+     * @return void
+     */
+    protected function logResult($sMessage)
+    {
+        $sLogFilePath = getShopBasePath().'/log/'.$this->sLogFileName;
+        $oLogFile = fopen($sLogFilePath, "a");
+        if ($oLogFile) {
+            fwrite($oLogFile, $sMessage);
+            fclose($oLogFile);
         }
     }
 

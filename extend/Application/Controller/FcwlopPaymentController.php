@@ -31,6 +31,7 @@ class FcwlopPaymentController extends FcwlopPaymentController_parent
         $blFcwlopIsRedirected = Registry::getSession()->getVariable('fcwlop_is_redirected');
         if (!empty($sSessChallenge) && $blFcwlopIsRedirected === true) {
             FcwlopOrderHelper::getInstance()->fcwlopCancelCurrentOrder();
+            Registry::getSession()->deleteVariable('fcwlop_sepadirectdebit_iban');
         }
         Registry::getSession()->deleteVariable('fcwlop_is_redirected');
         parent::init();
@@ -63,8 +64,25 @@ class FcwlopPaymentController extends FcwlopPaymentController_parent
             return $mRet;
         }
         try {
+            if (!($aDynvalue = Registry::getRequest()->getRequestEscapedParameter('dynvalue'))) {
+                $aDynvalue = Registry::getSession()->getVariable('dynvalue');
+            }
+
             if ($sPaymentId == 'fcwlopgroupedcard') {
                 $mRet = 'order';
+            }
+
+            if ($sPaymentId == 'fcwlopsepadirectdebit') {
+                Registry::getSession()->deleteVariable('fcwlop_payment_errors');
+                Registry::getSession()->deleteVariable('fcwlop_sepadirectdebit_iban');
+                $mRet = 'order';
+
+                $sIban = $aDynvalue['fcwlop_sepadirectdebit_iban'];
+                if (empty($sIban)) {
+                    Registry::getSession()->setVariable('fcwlop_payment_errors', [Registry::getLang()->translateString('FCWLOP_ERROR_SEPA_IBAN_MISSING')]);
+                    $mRet = 'payment';
+                }
+                Registry::getSession()->setVariable('fcwlop_sepadirectdebit_iban', $sIban);
             }
 
             $oFcwlopPaymentModel = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentModel($sPaymentId);
@@ -77,6 +95,14 @@ class FcwlopPaymentController extends FcwlopPaymentController_parent
         }
 
         return $mRet;
+    }
+
+    /**
+     * @return void
+     */
+    public function fcwlopGetErrors()
+    {
+        return Registry::getSession()->getVariable('fcwlop_payment_errors');
     }
 
     /**

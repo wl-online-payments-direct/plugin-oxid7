@@ -665,6 +665,7 @@ class FcwlopPaymentHelper
         Registry::getSession()->deleteVariable('fcwlop_redirect_url');
         Registry::getSession()->deleteVariable('fcwlop_is_redirected');
         Registry::getSession()->deleteVariable('fcwlop_hosted_tokenization_id');
+        Registry::getSession()->deleteVariable('fcwlop_sepadirectdebit_iban');
     }
 
     /**
@@ -704,6 +705,14 @@ class FcwlopPaymentHelper
         }
 
         return $aActivatedCardsLogos;
+    }
+
+    /**
+     * @return int
+     */
+    public function fcwlopGetAutoCancellationDelay()
+    {
+        return (int) $this->fcwlopGetShopConfVar('sFcwlopAutoCancellation');
     }
 
     /**

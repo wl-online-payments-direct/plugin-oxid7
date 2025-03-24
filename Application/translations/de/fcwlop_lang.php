@@ -27,5 +27,7 @@ $aLang = [
     'FCWLOP_SECOND_CHANCE_MAIL_SUBJECT'         => 'Abschluss Ihrer Bestellung bei',
     'FCWLOP_CHECKOUT_PENDING_THANKYOU'          => 'Die Zahlung steht noch aus.',
 
+    'FCWLOP_ERROR_SEPA_IBAN_MISSING'            => 'IBAN fehlt',
+
     'FCWLOP_GROUPED_CARDS'                      => 'Kreditkarte',
 ];

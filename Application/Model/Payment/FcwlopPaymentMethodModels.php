@@ -9,6 +9,7 @@ namespace FC\FCWLOP\Application\Model\Payment;
 use FC\FCWLOP\Application\Model\Payment\Methods\FcwlopWorldlineGenericCardMethod;
 use FC\FCWLOP\Application\Model\Payment\Methods\FcwlopWorldlineGenericMethod;
 use FC\FCWLOP\Application\Model\Payment\Methods\FcwlopWorldlineGroupedCardMethod;
+use FC\FCWLOP\Application\Model\Payment\Methods\FcwlopWorldlineSepaDirectDebit;
 
 class FcwlopPaymentMethodModels
 {
@@ -54,7 +55,7 @@ class FcwlopPaymentMethodModels
         'fcwlopp24' => null,
         'fcwloppaypal' => null,
         'fcwloppostfinance' => null,
-        'fcwlopsepadirectdebit' => null,
+        'fcwlopsepadirectdebit' => FcwlopWorldlineSepaDirectDebit::class,
         'fcwlopsofinco3x4x' => null,
         'fcwlopspiritofcadeau' => null,
         'fcwloptwint' => null,

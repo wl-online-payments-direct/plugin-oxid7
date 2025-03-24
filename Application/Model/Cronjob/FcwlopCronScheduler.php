@@ -30,10 +30,10 @@ class FcwlopCronScheduler
     /**
      * Check if cronjob is due again
      *
-     * @param  Base $oCronjob
+     * @param  FcwlopCronBase $oCronjob
      * @return bool
      */
-    protected function isCronjobDue(Base $oCronjob)
+    protected function isCronjobDue(FcwlopCronBase $oCronjob)
     {
         $iGracePeriod = 5; // Grace period timer to prevent cronjob not starting when crontab timer and minute interval are exactly the same
         if (empty($oCronjob->getLastRunDateTime()) || (strtotime($oCronjob->getLastRunDateTime()) - $iGracePeriod) <= (time() - ($oCronjob->getMinuteInterval() * 60))) {
@@ -50,7 +50,7 @@ class FcwlopCronScheduler
      */
     public function start($iShopId = false)
     {
-        Base::outputInfo("START WORLDLINE CRONJOB EXECUTION");
+        FcwlopCronBase::outputInfo("START WORLDLINE CRONJOB EXECUTION");
 
         if ($iShopId !== false) {
             $oConfig = Registry::getConfig();
@@ -65,6 +65,6 @@ class FcwlopCronScheduler
             }
         }
 
-        Base::outputInfo("FINISHED WORLDLINE CRONJOB EXECUTION");
+        FcwlopCronBase::outputInfo("FINISHED WORLDLINE CRONJOB EXECUTION");
     }
 }

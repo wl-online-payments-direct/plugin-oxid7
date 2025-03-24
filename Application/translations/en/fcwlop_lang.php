@@ -27,5 +27,7 @@ $aLang = [
     'FCWLOP_SECOND_CHANCE_MAIL_SUBJECT'         => 'Completion of your order at',
     'FCWLOP_CHECKOUT_PENDING_THANKYOU'          => 'The payment is still pending.',
 
+    'FCWLOP_ERROR_SEPA_IBAN_MISSING'            => 'IBAN missing',
+
     'FCWLOP_GROUPED_CARDS'                      => 'Credit card',
 ];

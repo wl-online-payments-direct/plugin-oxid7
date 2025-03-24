@@ -12,15 +12,25 @@ use FC\FCWLOP\Application\Model\FcwlopRequestLog;
 use FC\FCWLOP\Application\Model\Payment\FcwlopPaymentMethodTypes;
 use FC\FCWLOP\Application\Model\Response\FcwlopGenericErrorResponse;
 use FC\FCWLOP\Application\Model\Response\FcwlopGenericResponse;
+use OnlinePayments\Sdk\Domain\BankAccountIban;
 use OnlinePayments\Sdk\Domain\CreateHostedCheckoutRequest;
+use OnlinePayments\Sdk\Domain\CreateMandateRequest;
 use OnlinePayments\Sdk\Domain\HostedCheckoutSpecificInput;
+use OnlinePayments\Sdk\Domain\MandateAddress;
+use OnlinePayments\Sdk\Domain\MandateContactDetails;
+use OnlinePayments\Sdk\Domain\MandateCustomer;
+use OnlinePayments\Sdk\Domain\MandatePersonalInformation;
+use OnlinePayments\Sdk\Domain\MandatePersonalName;
 use OnlinePayments\Sdk\Domain\Order;
 use OnlinePayments\Sdk\Domain\PaymentProductFilter;
 use OnlinePayments\Sdk\Domain\PaymentProductFiltersHostedCheckout;
+use OnlinePayments\Sdk\Domain\SepaDirectDebitPaymentMethodSpecificInput;
+use OnlinePayments\Sdk\Domain\SepaDirectDebitPaymentProduct771SpecificInput;
 use OnlinePayments\Sdk\ReferenceException;
 use OnlinePayments\Sdk\ValidationException;
 use OxidEsales\Eshop\Application\Model\Order as CoreOrder;
 use OxidEsales\Eshop\Application\Model\Payment;
+use OxidEsales\Eshop\Application\Model\User as CoreUser;
 use OxidEsales\Eshop\Core\Registry;
 
 class FcwlopCreateHostedCheckoutRequest extends FcwlopBaseRequest
@@ -66,6 +76,109 @@ class FcwlopCreateHostedCheckoutRequest extends FcwlopBaseRequest
     public function addHostedSpecificParameters(HostedCheckoutSpecificInput $oParameters)
     {
         $this->oApiRequest->setHostedCheckoutSpecificInput($oParameters);
+    }
+
+    /**
+     * @param SepaDirectDebitPaymentMethodSpecificInput $oParameters
+     * @return void
+     */
+    public function addSepaDirectDebitParameters(SepaDirectDebitPaymentMethodSpecificInput $oParameters)
+    {
+        $this->oApiRequest->setSepaDirectDebitPaymentMethodSpecificInput($oParameters);
+    }
+
+    /**
+     * @param CoreOrder $oCoreOrder
+     * @param int $iPaymentProductId
+     * @param string $sIban
+     * @return SepaDirectDebitPaymentMethodSpecificInput
+     */
+    public function buildApiSepaDirectDebitSpecificInput(CoreOrder $oCoreOrder, $iPaymentProductId, $sIban)
+    {
+        $oParameters = new SepaDirectDebitPaymentMethodSpecificInput();
+        $oParameters->setPaymentProductId($iPaymentProductId);
+
+        $oPaymentProductSpecificInput = new SepaDirectDebitPaymentProduct771SpecificInput();
+
+        $oMandateRequest = $this->buildApiSepaMandateRequest($oCoreOrder, $this->oApiRequest->getOrder(), $sIban);
+        $oPaymentProductSpecificInput->setMandate($oMandateRequest);
+
+        $oParameters->setPaymentProduct771SpecificInput($oPaymentProductSpecificInput);
+
+        return $oParameters;
+    }
+
+    /**
+     * @param CoreOrder $oCoreOrder
+     * @param Order $oApiOrder
+     * @param string $sIban
+     * @return CreateMandateRequest
+     */
+    protected function buildApiSepaMandateRequest(CoreOrder $oCoreOrder, Order $oApiOrder, $sIban)
+    {
+        $oMandateRequest = new CreateMandateRequest();
+
+        $oMandateCustomer = $this->buildMandateCustomer($oCoreOrder, $oApiOrder, $sIban);
+        $oMandateRequest->setCustomer($oMandateCustomer);
+
+        $sUserId = $oCoreOrder->oxorder__oxuserid->value;
+        $oMandateRequest->setCustomerReference($sUserId);
+
+        $oHelper = FcwlopPaymentHelper::getInstance();
+        $oUser = new CoreUser();
+        $oUser->load($sUserId);
+        $sLocale = $oHelper->fcwlopGetLocale($oUser);
+        $aLang = explode('_', $sLocale);
+        $oMandateRequest->setLanguage($aLang[0] ?? 'en');
+
+        $oMandateRequest->setRecurrenceType('UNIQUE');
+        $oMandateRequest->setSignatureType('UNSIGNED');
+
+        $sUniqueMandateReference = (new \DateTimeImmutable())->format('Ymdhis') .
+            '_' . $oUser->oxuser__oxcustnr->value .
+            '_' . $oCoreOrder->oxorder_oxordernr->value;
+        $oMandateRequest->setUniqueMandateReference($sUniqueMandateReference);
+
+        return $oMandateRequest;
+    }
+
+    /**
+     * @param CoreOrder $oCoreOrder
+     * @param Order $oApiOrder
+     * @param string $sIban
+     * @return MandateCustomer
+     */
+    protected function buildMandateCustomer(CoreOrder $oCoreOrder, Order $oApiOrder, $sIban)
+    {
+        $oCustomer = $oApiOrder->getCustomer();
+        $oMandateCustomer = new MandateCustomer();
+
+        $oBankAccountIban = new BankAccountIban();
+        $oBankAccountIban->setIban($sIban);
+        $oMandateCustomer->setBankAccountIban($oBankAccountIban);
+
+        if (!empty($oCustomer->getCompanyInformation())) {
+            $oMandateCustomer->setCompanyName($oCustomer->getCompanyInformation()->getName());
+        } elseif(!empty($oCoreOrder->oxorder__oxbillcompany->value)) {
+            $oMandateCustomer->setCompanyName($oCoreOrder->oxorder__oxbillcompany->value);
+        }
+
+        $oMandateContactDetails = new MandateContactDetails();
+        $oMandateContactDetails->setEmailAddress($oCustomer->getContactDetails()->getEmailAddress());
+        $oMandateCustomer->setContactDetails($oMandateContactDetails);
+
+        $oMandateAddress = new MandateAddress();
+        $oMandateAddress->fromJson($oCustomer->getBillingAddress()->toJson());
+        $oMandateCustomer->setMandateAddress($oMandateAddress);
+
+        $oMandatePersonalName = new MandatePersonalName();
+        $oMandatePersonalName->fromJson($oCustomer->getPersonalInformation()->getName()->toJson());
+        $oMandatePersonalInfo = new MandatePersonalInformation();
+        $oMandatePersonalInfo->setName($oMandatePersonalName);
+        $oMandatePersonalInfo->setTitle($oCustomer->getPersonalInformation()->getGender());
+        $oMandateCustomer->setPersonalInformation($oMandatePersonalInfo);
+
+        return $oMandateCustomer;
     }
 
     /**

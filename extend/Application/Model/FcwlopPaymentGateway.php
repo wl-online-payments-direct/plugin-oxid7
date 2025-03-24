@@ -8,6 +8,7 @@ namespace FC\FCWLOP\extend\Application\Model;
 
 use FC\FCWLOP\Application\Helper\FcwlopPaymentHelper;
 use FC\FCWLOP\Application\Model\Payment\FcwlopPaymentMethodCodes;
+use FC\FCWLOP\Application\Model\Payment\Methods\FcwlopWorldlineGenericMethod;
 use FC\FCWLOP\Application\Model\Request\FcwlopCreateHostedCheckoutRequest;
 use FC\FCWLOP\Application\Model\Request\FcwlopCreatePaymentRequest;
 use FC\FCWLOP\Application\Model\Request\FcwlopGetHostedTokenizationRequest;
@@ -159,6 +160,20 @@ class FcwlopPaymentGateway extends FcwlopPaymentGateway_parent
 
                 $oOrderParam = $oCreateHostedCheckoutRequest->buildApiOrderParameter($oOrder);
                 $oCreateHostedCheckoutRequest->addOrderParameter($oOrderParam);
+
+                if ($oFcwlopPaymentModel->getOxidPaymentId() == 'fcwlopsepadirectdebit') {
+                    $sIban = Registry::getSession()->getVariable('fcwlop_sepadirectdebit_iban');
+                    if (empty($sIban)) {
+                        return false;
+                    }
+
+                    $oSepaDirectDebitParameters = $oCreateHostedCheckoutRequest->buildApiSepaDirectDebitSpecificInput(
+                        $oOrder,
+                        $oFcwlopPaymentModel->getWorldlinePaymentCode(),
+                        $sIban
+                    );
+                    $oCreateHostedCheckoutRequest->addSepaDirectDebitParameters($oSepaDirectDebitParameters);
+                }
 
                 $oResponse = $oCreateHostedCheckoutRequest->execute();
 

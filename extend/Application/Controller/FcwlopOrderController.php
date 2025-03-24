@@ -138,17 +138,26 @@ class FcwlopOrderController extends FcwlopOrderController_parent
                     $sStatus = $oApi->getHostedCheckout($sHostedCheckoutId)->getStatus();
 
                     if($sStatus == 'CANCELLED_BY_CONSUMER') {
-                        $sResult = 'canceled';
+                        $sResult = 'cancelled';
                         break;
                     } elseif($sStatus == 'PAYMENT_CREATED') {
-                        $sResult = 'success';
+                        if($oApi->getHostedCheckout($sHostedCheckoutId)->getCreatedPaymentOutput()->getPaymentStatusCategory() == 'STATUS_UNKNOWN') {
+                            if(!$oApi->getHostedCheckout($sHostedCheckoutId)->getCreatedPaymentOutput()->getPayment()->getStatusOutput()->getIsAuthorized()) {
+                                $sResult = 'cancelled';
+                            } else {
+                                $sResult = 'pending';
+                            }
+                        } else {
+                            $sResult = 'success';
+                        }
+
                         break;
                     }
 
                     $iCounter++;
                 }
 
-                if ($sResult == 'canceled') {
+                if ($sResult == 'cancelled') {
                     FcwlopOrderHelper::getInstance()->fcwlopCancelCurrentOrder();
                     return $this->redirectWithError('FCWLOP_ERROR_ORDER_CANCELED');
                 }
