@@ -20,7 +20,7 @@ In the root shop directory :
 
 - Copy content of module repository into: **vendor/wl-online-payments-direct/plugin-oxid7**
 
-- Run command: <pre>composer require wl-online-payments-direct/sdk-php</pre>
+- Run command: <pre>composer require wl-online-payments-direct/sdk-php:~7.5.0</pre>
 
 - Run commands:
 <pre>
