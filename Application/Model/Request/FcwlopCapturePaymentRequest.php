@@ -10,7 +10,7 @@ use FC\FCWLOP\Application\Helper\FcwlopPaymentHelper;
 use FC\FCWLOP\Application\Model\FcwlopRequestLog;
 use FC\FCWLOP\Application\Model\Response\FcwlopGenericErrorResponse;
 use FC\FCWLOP\Application\Model\Response\FcwlopGenericResponse;
-use OnlinePayments\Sdk\DataObject;
+use OnlinePayments\Sdk\Domain\DataObject;
 use OnlinePayments\Sdk\Domain\CapturePaymentRequest;
 use OnlinePayments\Sdk\Domain\CaptureResponse;
 use OnlinePayments\Sdk\Domain\PaymentReferences;

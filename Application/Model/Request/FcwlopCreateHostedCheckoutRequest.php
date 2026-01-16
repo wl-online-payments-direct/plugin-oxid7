@@ -15,6 +15,7 @@ use FC\FCWLOP\Application\Model\Response\FcwlopGenericResponse;
 use OnlinePayments\Sdk\Domain\BankAccountIban;
 use OnlinePayments\Sdk\Domain\CreateHostedCheckoutRequest;
 use OnlinePayments\Sdk\Domain\CreateMandateRequest;
+use OnlinePayments\Sdk\Domain\CreateMandateWithReturnUrl;
 use OnlinePayments\Sdk\Domain\HostedCheckoutSpecificInput;
 use OnlinePayments\Sdk\Domain\MandateAddress;
 use OnlinePayments\Sdk\Domain\MandateContactDetails;
@@ -24,8 +25,8 @@ use OnlinePayments\Sdk\Domain\MandatePersonalName;
 use OnlinePayments\Sdk\Domain\Order;
 use OnlinePayments\Sdk\Domain\PaymentProductFilter;
 use OnlinePayments\Sdk\Domain\PaymentProductFiltersHostedCheckout;
-use OnlinePayments\Sdk\Domain\SepaDirectDebitPaymentMethodSpecificInput;
-use OnlinePayments\Sdk\Domain\SepaDirectDebitPaymentProduct771SpecificInput;
+use OnlinePayments\Sdk\Domain\SepaDirectDebitPaymentMethodSpecificInputBase;
+use OnlinePayments\Sdk\Domain\SepaDirectDebitPaymentProduct771SpecificInputBase;
 use OnlinePayments\Sdk\ReferenceException;
 use OnlinePayments\Sdk\ValidationException;
 use OxidEsales\Eshop\Application\Model\Order as CoreOrder;
@@ -79,10 +80,10 @@ class FcwlopCreateHostedCheckoutRequest extends FcwlopBaseRequest
     }
 
     /**
-     * @param SepaDirectDebitPaymentMethodSpecificInput $oParameters
+     * @param SepaDirectDebitPaymentMethodSpecificInputBase $oParameters
      * @return void
      */
-    public function addSepaDirectDebitParameters(SepaDirectDebitPaymentMethodSpecificInput $oParameters)
+    public function addSepaDirectDebitParameters(SepaDirectDebitPaymentMethodSpecificInputBase $oParameters)
     {
         $this->oApiRequest->setSepaDirectDebitPaymentMethodSpecificInput($oParameters);
     }
@@ -91,14 +92,14 @@ class FcwlopCreateHostedCheckoutRequest extends FcwlopBaseRequest
      * @param CoreOrder $oCoreOrder
      * @param int $iPaymentProductId
      * @param string $sIban
-     * @return SepaDirectDebitPaymentMethodSpecificInput
+     * @return SepaDirectDebitPaymentMethodSpecificInputBase
      */
-    public function buildApiSepaDirectDebitSpecificInput(CoreOrder $oCoreOrder, $iPaymentProductId, $sIban)
+    public function buildApiSepaDirectDebitPaymentMethodSpecificInputBase(CoreOrder $oCoreOrder, $iPaymentProductId, $sIban)
     {
-        $oParameters = new SepaDirectDebitPaymentMethodSpecificInput();
+        $oParameters = new SepaDirectDebitPaymentMethodSpecificInputBase();
         $oParameters->setPaymentProductId($iPaymentProductId);
 
-        $oPaymentProductSpecificInput = new SepaDirectDebitPaymentProduct771SpecificInput();
+        $oPaymentProductSpecificInput = new SepaDirectDebitPaymentProduct771SpecificInputBase();
 
         $oMandateRequest = $this->buildApiSepaMandateRequest($oCoreOrder, $this->oApiRequest->getOrder(), $sIban);
         $oPaymentProductSpecificInput->setMandate($oMandateRequest);

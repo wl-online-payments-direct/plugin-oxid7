@@ -29,18 +29,31 @@ class FcwlopWebhookController extends FrontendController
      */
     public function handle()
     {
-        $sPayload = @file_get_contents('php://input');
-        $sSigHeader = $_SERVER['HTTP_X_GCS_SIGNATURE'] ?? '';
-        $sKeyHeader = $_SERVER['HTTP_X_GCS_KEYID'] ?? '';
-
         try {
+            $sPayload = @file_get_contents('php://input');
+            $aPayload = json_decode($sPayload, true);
+            $sSigHeader = $_SERVER['HTTP_X_GCS_SIGNATURE'] ?? '';
+            $sKeyHeader = $_SERVER['HTTP_X_GCS_KEYID'] ?? '';
+
+            if (empty($sSigHeader)) {
+                $sSigHeader = $aPayload['HTTP_X_GCS_SIGNATURE'] ?? '';
+            }
+            if (empty($sKeyHeader)) {
+                $sKeyHeader = $aPayload['HTTP_X_GCS_KEYID'] ?? '';
+            }
+
+            unset($aPayload['HTTP_X_GCS_SIGNATURE']);
+            unset($aPayload['HTTP_X_GCS_KEYID']);
+
             $oTransactionLog = new FcwlopTransactionLog();
-            $oTransactionLog->logTransaction(json_decode($sPayload, true));
+            $oTransactionLog->logTransaction($aPayload);
+
+            $sPayload = json_encode($aPayload);
 
             $oWebhookHelper = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlineWebhookHelper();
             $oEvent = $oWebhookHelper->unmarshal($sPayload, [
-                'X-GCS-SIGNATURE' => $sSigHeader,
-                'X-GCS-KEYID' => $sKeyHeader,
+                'X-GCS-Signature' => $sSigHeader,
+                'X-GCS-KeyId' => $sKeyHeader,
             ]);
 
             try {
@@ -79,7 +92,7 @@ class FcwlopWebhookController extends FrontendController
      */
     protected function handleEvent(WebhooksEvent $oEvent)
     {
-        $sType = $oEvent->getType();
+        $sType = $oEvent->type;
 
         if (!in_array($sType, [
             'payment.created',

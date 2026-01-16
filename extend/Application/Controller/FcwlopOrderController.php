@@ -37,37 +37,45 @@ class FcwlopOrderController extends FcwlopOrderController_parent
      */
     public function execute()
     {
-        $sNextStep = parent::execute();
+        try {
+            $sNextStep = parent::execute();
 
-        $sPaymentId = Registry::getSession()->getVariable('paymentid');
-        if (!FcwlopPaymentHelper::getInstance()->fcwlopIsWorldlinePaymentMethod($sPaymentId)) {
+            $sPaymentId = Registry::getSession()->getVariable('paymentid');
+            if (!FcwlopPaymentHelper::getInstance()->fcwlopIsWorldlinePaymentMethod($sPaymentId)) {
+                return $sNextStep;
+            }
+
+            $oOrder = $this->getOrder();
+            if ($oOrder) {
+                if(empty($sPaymentId)) {
+                    $sPaymentId = $oOrder->getPaymentType()->oxuserpayments__oxpaymentsid->value;
+                }
+
+                if ($sPaymentId == 'fcwlopgroupedcard' && FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlineCreditCardMode() == 'embedded') {
+                    $sTransactionId = $oOrder->oxorder__oxtransid->value;
+                    $oPaymentDetails = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($sTransactionId);
+                    FcwlopOrderHelper::getInstance()->fcwlopRestoreCardPaymentId($sTransactionId, $oOrder, $oPaymentDetails);
+                }
+            }
+
+            if ($sNextStep == 'thankyou') {
+                $blFcwlopNeedsRedirection = Registry::getSession()->getVariable('fcwlop_needs_redirection');
+                $sRedirectUrl = Registry::getSession()->getVariable('fcwlop_redirect_url');
+
+                if ($blFcwlopNeedsRedirection && !empty($sRedirectUrl)) {
+                    Registry::getSession()->setVariable('fcwlop_is_redirected', true);
+                    Registry::getUtils()->redirect($sRedirectUrl);
+                }
+            }
+
             return $sNextStep;
+        } catch (\Exception $oEx) {
+            FcwlopOrderHelper::getInstance()->fcwlopCancelCurrentOrder();
+            Registry::getLogger()->error($oEx->getMessage(), $oEx->getTrace());
+            Registry::getSession()->setVariable('payerror', -50);
+            Registry::getSession()->setVariable('payerrortext', Registry::getLang()->translateString('FCWLOP_ERROR_ORDER_FAILED'));
+            return 'payment';
         }
-        
-        $oOrder = $this->getOrder();
-        if ($oOrder) {
-            if(empty($sPaymentId)) {
-                $sPaymentId = $oOrder->getPaymentType()->oxuserpayments__oxpaymentsid->value;
-            }
-
-            if ($sPaymentId == 'fcwlopgroupedcard' && FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlineCreditCardMode() == 'embedded') {
-                $sTransactionId = $oOrder->oxorder__oxtransid->value;
-                $oPaymentDetails = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($sTransactionId);
-                FcwlopOrderHelper::getInstance()->fcwlopRestoreCardPaymentId($sTransactionId, $oOrder, $oPaymentDetails);
-            }    
-        }
-
-        if ($sNextStep == 'thankyou') {
-            $blFcwlopNeedsRedirection = Registry::getSession()->getVariable('fcwlop_needs_redirection');
-            $sRedirectUrl = Registry::getSession()->getVariable('fcwlop_redirect_url');
-
-            if ($blFcwlopNeedsRedirection && !empty($sRedirectUrl)) {
-                Registry::getSession()->setVariable('fcwlop_is_redirected', true);
-                Registry::getUtils()->redirect($sRedirectUrl);
-            }
-        }
-
-        return $sNextStep;
     }
 
     /**
