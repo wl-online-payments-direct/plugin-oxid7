@@ -16,11 +16,12 @@ use FC\FCWLOP\Application\Model\Request\FcwlopCancelPaymentRequest;
 use FC\FCWLOP\Application\Model\Request\FcwlopCapturePaymentRequest;
 use FC\FCWLOP\Application\Model\Request\FcwlopCreateHostedTokenizationRequest;
 use FC\FCWLOP\Application\Model\Request\FcwlopRefundRequest;
+use OnlinePayments\Sdk\Authentication\V1HmacAuthenticator;
 use OnlinePayments\Sdk\Client;
 use OnlinePayments\Sdk\Communicator;
 use OnlinePayments\Sdk\CommunicatorConfiguration;
-use OnlinePayments\Sdk\DataObject;
-use OnlinePayments\Sdk\DefaultConnection;
+use OnlinePayments\Sdk\Domain\DataObject;
+use OnlinePayments\Sdk\Communication\DefaultConnection;
 use OnlinePayments\Sdk\Domain\CreateHostedTokenizationRequest;
 use OnlinePayments\Sdk\Domain\PaymentDetailsResponse;
 use OnlinePayments\Sdk\Domain\PaymentProduct;
@@ -207,7 +208,7 @@ class FcwlopPaymentHelper
         $oParams->setCountryCode($this->fcwlopGetShopCountryCode());
         $oParams->setCurrencyCode($this->fcwlopGetShopCurrency()->name);
         if ($blSkipFieldData) {
-            $oParams->addHide('fields');
+            $oParams->addHide(['fields']);
         }
 
         return $oApi->products()->getPaymentProducts($oParams)->getPaymentProducts();
@@ -309,7 +310,7 @@ class FcwlopPaymentHelper
         $aDbTransaction = $this->fcwlopGetWorldlineTransaction($sTransactionId, -1, 'CAPTURED');
 
         $aCaptures = [];
-        $oPaymentCaptures = $this->fcwlopLoadWorldlineApi()->payments()->getCaptures($sPaymentId);
+        $oPaymentCaptures = $this->fcwlopLoadWorldlineApi()->captures()->getCaptures($sPaymentId);
         foreach ($oPaymentCaptures->getCaptures() as $oCapture) {
             if ($oCapture->getStatus() != 'CAPTURED') {
                 continue;
@@ -341,7 +342,7 @@ class FcwlopPaymentHelper
         $aDbTransaction = $this->fcwlopGetWorldlineTransaction($sTransactionId, -1, 'REFUNDED');
 
         $aRefunds = [];
-        $oPaymentRefunds = $this->fcwlopLoadWorldlineApi()->payments()->getRefunds($sPaymentId);
+        $oPaymentRefunds = $this->fcwlopLoadWorldlineApi()->refunds()->getRefunds($sPaymentId);
         foreach ($oPaymentRefunds->getRefunds() as $oRefundResponse) {
             if ($oRefundResponse->getStatus() != 'REFUNDED') {
                 continue;
@@ -784,7 +785,6 @@ class FcwlopPaymentHelper
                 $this->fcwlopGetWorldlineApiLiveEndpoint() :
                 $this->fcwlopGetWorldlineApiSandboxEndpoint();
 
-            $oConnection = new DefaultConnection();
             $oCommunicatorConfiguration = new CommunicatorConfiguration(
                 $sApiKey,
                 $sApiSecret,
@@ -792,9 +792,11 @@ class FcwlopPaymentHelper
                 'OnlinePayments'
             );
 
+            $oAuthenticator = new V1HmacAuthenticator($oCommunicatorConfiguration);
+
             $oCommunicator = new Communicator(
-                $oConnection,
-                $oCommunicatorConfiguration
+                $oCommunicatorConfiguration,
+                $oAuthenticator
             );
 
             $oClient = new Client($oCommunicator);

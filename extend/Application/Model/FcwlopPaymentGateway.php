@@ -167,7 +167,7 @@ class FcwlopPaymentGateway extends FcwlopPaymentGateway_parent
                         return false;
                     }
 
-                    $oSepaDirectDebitParameters = $oCreateHostedCheckoutRequest->buildApiSepaDirectDebitSpecificInput(
+                    $oSepaDirectDebitParameters = $oCreateHostedCheckoutRequest->buildApiSepaDirectDebitPaymentMethodSpecificInputBase(
                         $oOrder,
                         $oFcwlopPaymentModel->getWorldlinePaymentCode(),
                         $sIban

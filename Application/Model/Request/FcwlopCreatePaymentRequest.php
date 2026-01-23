@@ -11,7 +11,7 @@ use FC\FCWLOP\Application\Helper\FcwlopPaymentHelper;
 use FC\FCWLOP\Application\Model\FcwlopRequestLog;
 use FC\FCWLOP\Application\Model\Response\FcwlopGenericErrorResponse;
 use FC\FCWLOP\Application\Model\Response\FcwlopGenericResponse;
-use OnlinePayments\Sdk\DataObject;
+use OnlinePayments\Sdk\Domain\DataObject;
 use OnlinePayments\Sdk\DeclinedPaymentException;
 use OnlinePayments\Sdk\Domain\BrowserData;
 use OnlinePayments\Sdk\Domain\CapturePaymentRequest;

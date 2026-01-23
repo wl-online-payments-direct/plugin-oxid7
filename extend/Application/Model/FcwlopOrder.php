@@ -8,7 +8,7 @@ namespace FC\FCWLOP\extend\Application\Model;
 
 use FC\FCWLOP\Application\Helper\FcwlopPaymentHelper;
 use FC\FCWLOP\Application\Model\Payment\Methods\FcwlopWorldlineGenericMethod;
-use OnlinePayments\Sdk\DataObject;
+use OnlinePayments\Sdk\Domain\DataObject;
 use OnlinePayments\Sdk\Domain\PaymentDetailsResponse;
 use OxidEsales\Eshop\Core\DatabaseProvider;
 use OxidEsales\Eshop\Core\Exception\DatabaseConnectionException;

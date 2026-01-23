@@ -30,4 +30,7 @@ $aLang = [
     'FCWLOP_ERROR_SEPA_IBAN_MISSING'            => 'IBAN missing',
 
     'FCWLOP_GROUPED_CARDS'                      => 'Credit card',
+
+    'FCWLOP_WEBHOOK_SIGNATURE_FAILED'           => 'Webhook call signature validation failed.',
+    'FCWLOP_WEBHOOK_EVENT_UNEXPECTED'           => 'Webhook call contained invalid data.',
 ];

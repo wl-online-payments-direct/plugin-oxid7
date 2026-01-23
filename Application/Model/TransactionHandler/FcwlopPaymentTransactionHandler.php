@@ -30,7 +30,7 @@ class FcwlopPaymentTransactionHandler extends FcwlopBaseTransactionHandler
         }
 
         $blSuccess = 1;
-        $sTransactionType = $oEvent->getType();
+        $sTransactionType = $oEvent->type;
         $sStatus = $this->getStatusCode($oEvent);
         $sTransactionCurrency = $this->getTransactionCurrency($oEvent);
 
