@@ -6,6 +6,7 @@
 
 namespace FC\FCWLOP\Application\Model;
 
+use FC\FCWLOP\Application\Helper\FcwlopDatabaseHelper;
 use FC\FCWLOP\Application\Helper\FcwlopPaymentHelper;
 use OxidEsales\Eshop\Application\Model\Order;
 use OxidEsales\Eshop\Core\DatabaseProvider;
@@ -73,7 +74,7 @@ class FcwlopRequestLog extends BaseModel
      */
     public function logRequest($aRequest, $oResponse, $sOrderId, $sRequestType, $sResponseStatus)
     {
-        $oDb = DatabaseProvider::getDb();
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
 
         $sStoreId = Registry::getConfig()->getActiveShop()->getShopId();
         $iOrderNr = 0;
@@ -92,17 +93,17 @@ class FcwlopRequestLog extends BaseModel
         $sQuery = " INSERT INTO `".self::$sTableName."` (
                         ORDERID, STOREID, ORDERNR, MODE, REQUESTTYPE, RESPONSESTATUS, REQUEST, RESPONSE
                     ) VALUES (
-                        :orderid, :storeid, :ordernr, :mode, :requesttype, :responsestatus, :savedrequest, :savedresponse
+                        :sOrderid, :sStoreid, :iOrdernr, :sMode, :sRequestType, :sResponseStatus, :sSavedRequest, :sSavedResponse
                     )";
-        $oDb->Execute($sQuery, [
-            ':orderid' => $sOrderId,
-            ':storeid' => $sStoreId,
-            ':ordernr' => $iOrderNr,
-            ':mode' => $sMode,
-            ':requesttype' => $sRequestType,
-            ':responsestatus' => $sResponseStatus,
-            ':savedrequest' => $sSavedRequest,
-            ':savedresponse' => $sSavedResponse,
+        $oDb->executeStatement($sQuery, [
+            'sOrderid' => $sOrderId,
+            'sStoreid' => $sStoreId,
+            'iOrdernr' => $iOrderNr,
+            'sMode' => $sMode,
+            'sRequestType' => $sRequestType,
+            'sResponseStatus' => $sResponseStatus,
+            'sSavedRequest' => $sSavedRequest,
+            'sSavedResponse' => $sSavedResponse,
         ]);
     }
 

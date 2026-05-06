@@ -158,9 +158,14 @@ class FcwlopOrderHelper
      */
     public function fcwlopLoadOrderByOrderNumber($iOrderNr)
     {
-        $sQuery = "SELECT oxid FROM oxorder WHERE oxordernr = ?";
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
 
-        $sOrderId = DatabaseProvider::getDb()->getOne($sQuery, array($iOrderNr));
+        $sQuery = "SELECT oxid FROM oxorder WHERE oxordernr = :iOrderNr";
+
+        $sOrderId = $oDb->fetchOne($sQuery, [
+            'iOrderNr' => $iOrderNr
+        ]);
+
         if (!empty($sOrderId)) {
             $oOrder = oxNew(Order::class);
             $oOrder->load($sOrderId);
@@ -179,9 +184,14 @@ class FcwlopOrderHelper
      */
     public function fcwlopLoadOrderByTransactionId($sTransactionId)
     {
-        $sQuery = "SELECT oxid FROM oxorder WHERE oxtransid = ?";
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
 
-        $sOrderId = DatabaseProvider::getDb()->getOne($sQuery, array($sTransactionId));
+        $sQuery = "SELECT oxid FROM oxorder WHERE oxtransid = :sTransactionId";
+
+        $sOrderId = $oDb->fetchOne($sQuery, [
+            'sTransactionId' => $sTransactionId
+        ]);
+
         if (!empty($sOrderId)) {
             $oOrder = oxNew(Order::class);
             $oOrder->load($sOrderId);

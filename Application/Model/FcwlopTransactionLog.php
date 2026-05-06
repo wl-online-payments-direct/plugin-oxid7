@@ -6,6 +6,7 @@
 
 namespace FC\FCWLOP\Application\Model;
 
+use FC\FCWLOP\Application\Helper\FcwlopDatabaseHelper;
 use FC\FCWLOP\Application\Helper\FcwlopOrderHelper;
 use OxidEsales\Eshop\Core\DatabaseProvider;
 use OxidEsales\Eshop\Core\Exception\DatabaseConnectionException;
@@ -46,7 +47,7 @@ class FcwlopTransactionLog extends BaseModel
      */
     public function logTransaction($aTransaction)
     {
-        $oDb = DatabaseProvider::getDb();
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
         $sSavedResponse = $this->encodeData($aTransaction);
 
         $sTxTime = isset($aTransaction['created'])
@@ -96,22 +97,22 @@ class FcwlopTransactionLog extends BaseModel
                         FCWLOP_MERCHANTID,
                         FCWLOP_RESPONSEBODY
                     ) VALUES (
-                        :txtime, :ordernr, :txid, :txstep, :type, :mode, :method, :price, :currency, :status, :statuscode, :merchantid, :response 
+                        :sTxTime, :iOrderNr, :iTxId, :iTxStep, :sType, :sMode, :sMethod, :dPrice, :sCurrency, :sStatus, :iStatusCode, :sMerchantId, :sSavedResponse
                     )";
-        $oDb->Execute($sQuery, [
-            ':txtime' => $sTxTime,
-            ':ordernr' => $iOrderNr,
-            ':txid' => $iTxId,
-            ':txstep' => $iTxStep,
-            ':type' => $sType,
-            ':mode' => $sMode,
-            ':method' => $sMethod,
-            ':price' => $dPrice,
-            ':currency' => $sCurrency,
-            ':status' => $sStatus,
-            ':statuscode' => $iStatusCode,
-            ':merchantid' => $sMerchantId,
-            ':response' => $sSavedResponse
+        $oDb->executeStatement($sQuery, [
+            'sTxTime' => $sTxTime,
+            'iOrderNr' => $iOrderNr,
+            'iTxId' => $iTxId,
+            'iTxStep' => $iTxStep,
+            'sType' => $sType,
+            'sMode' => $sMode,
+            'sMethod' => $sMethod,
+            'dPrice' => $dPrice,
+            'sCurrency' => $sCurrency,
+            'sStatus' => $sStatus,
+            'iStatusCode' => $iStatusCode,
+            'sMerchantId' => $sMerchantId,
+            'sSavedResponse' => $sSavedResponse
         ]);
     }
 

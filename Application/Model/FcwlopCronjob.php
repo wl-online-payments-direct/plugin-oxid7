@@ -6,6 +6,7 @@
 
 namespace FC\FCWLOP\Application\Model;
 
+use FC\FCWLOP\Application\Helper\FcwlopDatabaseHelper;
 use OxidEsales\Eshop\Core\DatabaseProvider;
 use OxidEsales\Eshop\Core\Exception\DatabaseConnectionException;
 use OxidEsales\EshopCommunity\Core\Database\Adapter\DatabaseInterface;
@@ -61,11 +62,13 @@ class FcwlopCronjob
      */
     public function addNewCronjob($sCronjobId, $iDefaultMinuteInterval)
     {
-        $sQuery = "INSERT INTO `".self::$sTableName."` (OXID, MINUTE_INTERVAL, LAST_RUN) VALUES(:oxid, :minuteinterval, '0000-00-00 00:00:00');";
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
 
-        DatabaseProvider::getDb()->Execute($sQuery, [
-            ':oxid' => $sCronjobId,
-            ':minuteinterval' => $iDefaultMinuteInterval,
+        $sQuery = "INSERT INTO `".self::$sTableName."` (OXID, MINUTE_INTERVAL, LAST_RUN) VALUES(:sOxid, :iMinuteinterval, '0000-00-00 00:00:00');";
+
+        $oDb->executeStatement($sQuery, [
+            'sOxid' => $sCronjobId,
+            'iMinuteinterval' => $iDefaultMinuteInterval,
         ]);
     }
 
@@ -78,11 +81,15 @@ class FcwlopCronjob
      */
     public function isCronjobAlreadyExisting($sCronjobId)
     {
-        $sQuery = "SELECT OXID FROM `".self::$sTableName."` WHERE OXID = ?;";
-        if (!DatabaseProvider::getDb()->getOne($sQuery, array($sCronjobId))) {
-            return false;
-        }
-        return true;
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
+
+        $sQuery = "SELECT OXID FROM `".self::$sTableName."` WHERE OXID = :sOxid;";
+
+        $sOxid = $oDb->fetchOne($sQuery, [
+            'sOxid' => $sCronjobId
+        ]);
+
+        return $sOxid !== false;
     }
 
     /**
@@ -93,7 +100,10 @@ class FcwlopCronjob
      */
     public function markCronjobAsFinished($sCronjobId)
     {
-        DatabaseProvider::getDb()->execute("UPDATE `".self::$sTableName."` SET LAST_RUN = NOW() WHERE OXID = ?;", array($sCronjobId));
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
+        $oDb->executeStatement("UPDATE `".self::$sTableName."` SET LAST_RUN = NOW() WHERE OXID = :sOxid;", [
+            'sOxid' => $sCronjobId
+        ]);
     }
 
     /**
@@ -104,9 +114,14 @@ class FcwlopCronjob
      */
     public function getCronjobData($sCronjobId)
     {
-        $oDb = DatabaseProvider::getDb(true);
-        $oDb->setFetchMode(DatabaseInterface::FETCH_MODE_ASSOC);
-        $sQuery = "SELECT * FROM `".self::$sTableName."` WHERE OXID = ?;";
-        return $oDb->getRow($sQuery, array($sCronjobId));
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
+
+        $sQuery = "SELECT * FROM `".self::$sTableName."` WHERE OXID = :sOxid;";
+
+        $aRow = $oDb->fetchAssoc($sQuery, [
+            'sOxid' => $sCronjobId
+        ]);
+
+        return $aRow;
     }
 }

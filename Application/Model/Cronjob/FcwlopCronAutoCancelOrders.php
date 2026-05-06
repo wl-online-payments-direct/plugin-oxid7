@@ -6,6 +6,7 @@
 
 namespace FC\FCWLOP\Application\Model\Cronjob;
 
+use FC\FCWLOP\Application\Helper\FcwlopDatabaseHelper;
 use FC\FCWLOP\Application\Helper\FcwlopPaymentHelper;
 use OxidEsales\Eshop\Application\Model\Order;
 use OxidEsales\Eshop\Core\DatabaseProvider;
@@ -58,7 +59,8 @@ class FcwlopCronAutoCancelOrders extends FcwlopCronBase
             AND OXTRANSSTATUS != 'OK'
             AND OXORDERDATE >= '" . $oStartDate->format('Y-m-d H:i:s') . "'";
 
-        $aOrders = DatabaseProvider::getDb()->getAll($sQuery);
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
+        $aOrders = $oDb->fetchAllNumeric($sQuery);
         array_walk($aOrders, function(&$aItem) {
             return $aItem = $aItem[0];
         });
@@ -145,9 +147,15 @@ class FcwlopCronAutoCancelOrders extends FcwlopCronBase
      */
     protected function proceedOrderCancellation($oOrder)
     {
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
+
         $oOrder->cancelOrder();
 
-        $sQuery = "UPDATE oxorder SET oxfolder = ?, oxtransstatus = ? WHERE oxid = ?";
-        DatabaseProvider::getDb()->Execute($sQuery, array('ORDERFOLDER_FINISHED', 'ERROR', $oOrder->getId()));
+        $sQuery = "UPDATE oxorder SET oxfolder = :sFolder, oxtransstatus = :sTransactionStatus WHERE oxid = :sOxid";
+        $oDb->executeStatement($sQuery, [
+            'sFolder' => 'ORDERFOLDER_FINISHED',
+            'sTransactionStatus' => 'ERROR',
+            'sOxid' => $oOrder->getId(),
+        ]);
     }
 }
