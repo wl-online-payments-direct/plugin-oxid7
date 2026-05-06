@@ -10,6 +10,7 @@ use Doctrine\DBAL\Connection;
 use OxidEsales\Eshop\Core\DatabaseProvider;
 use OxidEsales\Eshop\Core\Registry;
 use OxidEsales\EshopCommunity\Internal\Container\ContainerFactory;
+use OxidEsales\EshopCommunity\Internal\Framework\Database\QueryBuilderFactoryInterface;
 
 class FcwlopDatabaseHelper
 {
@@ -155,7 +156,8 @@ class FcwlopDatabaseHelper
     public static function getPdoDb()
     {
         $oContainer = ContainerFactory::getInstance()->getContainer();
+        $oFactory = $oContainer->get(QueryBuilderFactoryInterface::class);
 
-        return $oContainer->get('fcwlop.db_connection');
+        return  $oFactory->create()->getConnection();
     }
 }
