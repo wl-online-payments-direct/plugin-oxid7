@@ -89,8 +89,7 @@ class FcwlopDatabaseHelper
     public static function addColumnIfNotExists($sTableName, $sColumnName, $sQuery, $aNewColumnDataQueries = array())
     {
         $oDb = self::getPdoDb();
-        $aColumns = $oDb->fetchOne("SHOW COLUMNS FROM :sTableName LIKE :sColumnName", [
-            'sTableName' => $sTableName,
+        $aColumns = $oDb->fetchOne("SHOW COLUMNS FROM {$sTableName} LIKE :sColumnName", [
             'sColumnName' => $sColumnName,
         ]);
 
@@ -147,7 +146,11 @@ class FcwlopDatabaseHelper
         }
 
         $oDb = self::getPdoDb();
-        $oDb->executeStatement("UPDATE oxpayments SET oxactive = 0 WHERE FCWLOPISWORLDLINE = 1");
+        try {
+            $oDb->executeStatement("UPDATE oxpayments SET oxactive = 0 WHERE FCWLOPISWORLDLINE = 1");
+        } catch (\Exception $e) {
+            // do nothing as of yet
+        }
     }
 
     /**
