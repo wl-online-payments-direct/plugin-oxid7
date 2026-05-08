@@ -306,8 +306,12 @@ class FcwlopOrder extends FcwlopOrder_parent
         }
 
         if ($blReturn) {
-            $oWorldlinePayment = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($this->oxorder__oxtransid->value);
-            if ($oWorldlinePayment->getStatus() != 'PENDING_CAPTURE') {
+            try {
+                $oWorldlinePayment = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($this->oxorder__oxtransid->value);
+                if ($oWorldlinePayment->getStatus() != 'PENDING_CAPTURE') {
+                    $blReturn = false;
+                }
+            } catch (\Exception $e) {
                 $blReturn = false;
             }
         }
@@ -348,8 +352,12 @@ class FcwlopOrder extends FcwlopOrder_parent
             $blReturn = !(($iCount == 0));
         }
         if ($blReturn) {
-            $oWorldlinePayment = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($this->oxorder__oxtransid->value);
-            $blReturn = $oWorldlinePayment->getStatusOutput()->getIsRefundable();
+            try {
+                $oWorldlinePayment = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($this->oxorder__oxtransid->value);
+                $blReturn = $oWorldlinePayment->getStatusOutput()->getIsRefundable();
+            } catch (\Exception $e) {
+                $blReturn = false;
+            }
         }
 
         return $blReturn;
@@ -372,8 +380,12 @@ class FcwlopOrder extends FcwlopOrder_parent
             }
 
             if ($blReturn) {
-                $oWorldlinePayment = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($this->oxorder__oxtransid->value);
-                $blReturn = $oWorldlinePayment->getStatusOutput()->getIsCancellable();
+                try {
+                    $oWorldlinePayment = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($this->oxorder__oxtransid->value);
+                    $blReturn = $oWorldlinePayment->getStatusOutput()->getIsCancellable();
+                } catch (\Exception $e) {
+                    $blReturn = false;
+                }
             }
 
             return $blReturn;

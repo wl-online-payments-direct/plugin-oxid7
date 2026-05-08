@@ -128,9 +128,13 @@ class FcwlopOrderController extends FcwlopOrderController_parent
                 return $this->redirectWithError('FCWLOP_ERROR_TRANSACTIONID_NOT_FOUND');
             }
 
-            $oPaymentDetails = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($sTransactionId);
-            if ($oPayment->getId() == 'fcwlopgroupedcard') {
-                FcwlopOrderHelper::getInstance()->fcwlopRestoreCardPaymentId($sTransactionId, $oOrder, $oPaymentDetails);
+            try {
+                $oPaymentDetails = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($sTransactionId);
+                if ($oPayment->getId() == 'fcwlopgroupedcard') {
+                    FcwlopOrderHelper::getInstance()->fcwlopRestoreCardPaymentId($sTransactionId, $oOrder, $oPaymentDetails);
+                }
+            } catch (\Exception $oEx) {
+                return $this->redirectWithError('FCWLOP_ERROR_ORDER_FAILED');
             }
 
             $sHostedCheckoutId = Registry::getRequest()->getRequestParameter('hostedCheckoutId');
