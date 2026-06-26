@@ -6,6 +6,7 @@
 
 namespace FC\FCWLOP\extend\Application\Model;
 
+use FC\FCWLOP\Application\Helper\FcwlopDatabaseHelper;
 use FC\FCWLOP\Application\Helper\FcwlopPaymentHelper;
 use FC\FCWLOP\Application\Model\Payment\Methods\FcwlopWorldlineGenericMethod;
 use OnlinePayments\Sdk\Domain\DataObject;
@@ -78,10 +79,15 @@ class FcwlopOrder extends FcwlopOrder_parent
      */
     public function fcwlopMarkAsPaid()
     {
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
+
         $sDate = date('Y-m-d H:i:s');
 
-        $sQuery = "UPDATE oxorder SET oxpaid = ? WHERE oxid = ?";
-        DatabaseProvider::getDb()->Execute($sQuery, array($sDate, $this->getId()));
+        $sQuery = "UPDATE oxorder SET oxpaid = :sDate WHERE oxid = :sOxid";
+        $oDb->executeStatement($sQuery, [
+            'sDate' => $sDate,
+            'sOxid' => $this->getId()
+        ]);
 
         $this->oxorder__oxpaid = new Field($sDate);
     }
@@ -94,6 +100,8 @@ class FcwlopOrder extends FcwlopOrder_parent
      */
     public function fcwlopSetFolder($sFolder)
     {
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
+
         if(!in_array($sFolder, ['new', 'finished', 'problems'])) {
             return false;
         }
@@ -106,8 +114,11 @@ class FcwlopOrder extends FcwlopOrder_parent
             $sDbFolder = 'ORDERFOLDER_NEW';
         }
 
-        $sQuery = "UPDATE oxorder SET oxfolder = ? WHERE oxid = ?";
-        DatabaseProvider::getDb()->Execute($sQuery, array($sDbFolder, $this->getId()));
+        $sQuery = "UPDATE oxorder SET oxfolder = :sFolder WHERE oxid = :sOxid";
+        $oDb->executeStatement($sQuery, [
+            'sFolder' => $sDbFolder,
+            'sOxid' => $this->getId()
+        ]);
 
         $this->oxorder__oxfolder = new Field($sDbFolder);
 
@@ -122,6 +133,8 @@ class FcwlopOrder extends FcwlopOrder_parent
      */
     public function fcwlopSetStatus($sStatus)
     {
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
+
         if(!in_array($sStatus, ['not_finished', 'ok', 'error'])) {
             return false;
         }
@@ -134,8 +147,11 @@ class FcwlopOrder extends FcwlopOrder_parent
             $sDbStatus = 'NOT_FINISHED';
         }
 
-        $sQuery = "UPDATE oxorder SET oxtransstatus = ? WHERE oxid = ?";
-        DatabaseProvider::getDb()->Execute($sQuery, array($sDbStatus, $this->getId()));
+        $sQuery = "UPDATE oxorder SET oxtransstatus = :sTransstatus WHERE oxid = :sOxid";
+        $oDb->executeStatement($sQuery, [
+            'sTransstatus' => $sDbStatus,
+            'sOxid' => $this->getId()
+        ]);
 
         $this->oxorder__oxtransstatus = new Field($sDbStatus);
 
@@ -150,7 +166,13 @@ class FcwlopOrder extends FcwlopOrder_parent
      */
     public function fcwlopSetTransactionId($sTransactionId)
     {
-        DatabaseProvider::getDb()->execute('UPDATE oxorder SET oxtransid = ? WHERE oxid = ?', array($sTransactionId, $this->getId()));
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
+
+        $sQuery = "UPDATE oxorder SET oxtransid = :sTransId WHERE oxid = :sOxid";
+        $oDb->executeStatement($sQuery, [
+            'sTransId' => $sTransactionId,
+            'sOxid' => $this->getId()
+        ]);
 
         $this->oxorder__oxtransid = new Field($sTransactionId);
     }
@@ -163,7 +185,13 @@ class FcwlopOrder extends FcwlopOrder_parent
      */
     public function fcwlopSetExternalTransactionId($sTransactionId)
     {
-        DatabaseProvider::getDb()->execute('UPDATE oxorder SET fcwlopexternaltransid = ? WHERE oxid = ?', array($sTransactionId, $this->getId()));
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
+
+        $sQuery = "UPDATE oxorder SET fcwlopexternaltransid = :sTransId WHERE oxid = :sOxid";
+        $oDb->executeStatement($sQuery, [
+            'sTransId' => $sTransactionId,
+            'sOxid' => $this->getId()
+        ]);
 
         $this->oxorder__fcwlopexternaltransid = new Field($sTransactionId);
     }
@@ -184,8 +212,14 @@ class FcwlopOrder extends FcwlopOrder_parent
      */
     public function fcwlopSetCaptureMode($sConfigCaptureMode = null)
     {
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
+
         $sConfigCaptureMode = $sConfigCaptureMode ?? FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlineCaptureMode();
-        DatabaseProvider::getDb()->execute('UPDATE oxorder SET fcwlopauthmode = ? WHERE oxid = ?', array($sConfigCaptureMode, $this->getId()));
+        $sQuery = "UPDATE oxorder SET fcwlopauthmode = :sAuthMode WHERE oxid = :sOxid";
+        $oDb->executeStatement($sQuery, [
+            'sAuthMode' => $sConfigCaptureMode,
+            'sOxid' => $this->getId()
+        ]);
 
         $this->oxorder__fcwloauthpmode = new Field($sConfigCaptureMode);
     }
@@ -198,8 +232,14 @@ class FcwlopOrder extends FcwlopOrder_parent
      */
     public function fcwlopSetMode($sConfigMode = null)
     {
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
+
         $sConfigMode = $sConfigMode ?? FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlineMode();
-        DatabaseProvider::getDb()->execute('UPDATE oxorder SET fcwlopmode = ? WHERE oxid = ?', array($sConfigMode, $this->getId()));
+        $sQuery = "UPDATE oxorder SET fcwlopmode = :sMode WHERE oxid = :sOxid";
+        $oDb->executeStatement($sQuery, [
+            'sMode' => $sConfigMode,
+            'sOxid' => $this->getId()
+        ]);
 
         $this->oxorder__fcwlopmode = new Field($sConfigMode);
     }
@@ -245,6 +285,8 @@ class FcwlopOrder extends FcwlopOrder_parent
      */
     public function fcwlopAllowCapture(): bool
     {
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
+
         $blReturn = true;
 
         if ($this->oxorder__oxstorno->value == 1) {
@@ -256,13 +298,20 @@ class FcwlopOrder extends FcwlopOrder_parent
         }
 
         if ($blReturn) {
-            $iCount = DatabaseProvider::getDb()->getOne("SELECT COUNT(*) FROM fcwloptransactionlog WHERE FCWLOP_TXID = '{$this->oxorder__oxtransid->value}'");
+            $sQuery = "SELECT COUNT(*) FROM fcwloptransactionlog WHERE FCWLOP_TXID = :sTxId";
+            $iCount = $oDb->fetchOne($sQuery, [
+                'sTxId' => $this->oxorder__oxtransid->value
+            ]);
             $blReturn = !(($iCount == 0));
         }
 
         if ($blReturn) {
-            $oWorldlinePayment = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($this->oxorder__oxtransid->value);
-            if ($oWorldlinePayment->getStatus() != 'PENDING_CAPTURE') {
+            try {
+                $oWorldlinePayment = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($this->oxorder__oxtransid->value);
+                if ($oWorldlinePayment->getStatus() != 'PENDING_CAPTURE') {
+                    $blReturn = false;
+                }
+            } catch (\Exception $e) {
                 $blReturn = false;
             }
         }
@@ -279,20 +328,36 @@ class FcwlopOrder extends FcwlopOrder_parent
      */
     public function fcwlopAllowRefund(): bool
     {
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
+
         $blReturn = true;
 
         if ($this->oxorder__oxstorno->value == 1) {
             $blReturn = false;
         }
         if ($blReturn) {
-            $iCount = DatabaseProvider::getDb()->getOne("SELECT COUNT(*) FROM fcwloptransactionlog WHERE FCWLOP_TXID = '{$this->oxorder__oxtransid->value}' 
-                                                                    AND FCWLOP_STATUS IN ('CREATED', 'PENDING_CAPTURE', 'CAPTURED');
-                                                                ");
+            $sQuery = "
+                    SELECT
+                        COUNT(*)
+                    FROM
+                        fcwloptransactionlog
+                    WHERE
+                        FCWLOP_TXID = :sTxId
+                    AND
+                        FCWLOP_STATUS IN ('CREATED', 'PENDING_CAPTURE', 'CAPTURED');
+            ";
+            $iCount = $oDb->fetchOne($sQuery, [
+                'sTxId' => $this->oxorder__oxtransid->value
+            ]);
             $blReturn = !(($iCount == 0));
         }
         if ($blReturn) {
-            $oWorldlinePayment = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($this->oxorder__oxtransid->value);
-            $blReturn = $oWorldlinePayment->getStatusOutput()->getIsRefundable();
+            try {
+                $oWorldlinePayment = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($this->oxorder__oxtransid->value);
+                $blReturn = $oWorldlinePayment->getStatusOutput()->getIsRefundable();
+            } catch (\Exception $e) {
+                $blReturn = false;
+            }
         }
 
         return $blReturn;
@@ -315,8 +380,12 @@ class FcwlopOrder extends FcwlopOrder_parent
             }
 
             if ($blReturn) {
-                $oWorldlinePayment = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($this->oxorder__oxtransid->value);
-                $blReturn = $oWorldlinePayment->getStatusOutput()->getIsCancellable();
+                try {
+                    $oWorldlinePayment = FcwlopPaymentHelper::getInstance()->fcwlopGetWorldlinePaymentDetails($this->oxorder__oxtransid->value);
+                    $blReturn = $oWorldlinePayment->getStatusOutput()->getIsCancellable();
+                } catch (\Exception $e) {
+                    $blReturn = false;
+                }
             }
 
             return $blReturn;

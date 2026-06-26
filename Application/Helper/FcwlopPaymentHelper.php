@@ -221,6 +221,8 @@ class FcwlopPaymentHelper
      */
     public function fcwlopFetchWorldlineInstalledMethods()
     {
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
+
         $aMethods = [];
 
         $sQuery = " SELECT 
@@ -229,7 +231,7 @@ class FcwlopPaymentHelper
                         oxpayments
                     WHERE 
                         FCWLOPISWORLDLINE = 1";
-        $aResult = DatabaseProvider::getDb()->getAll($sQuery);
+        $aResult = $oDb->fetchAllNumeric($sQuery);
         foreach ($aResult as $aRow) {
             $aMethods[] = [
                 (int) $aRow[1] => $aRow[0],
@@ -247,6 +249,8 @@ class FcwlopPaymentHelper
      */
     public function fcwlopRegisterWorldlineMethod(array $aMethodDetails)
     {
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
+
         $aPaymentMethodMap = array_flip(FcwlopPaymentMethodCodes::WORLDLINE_PAYMENT_CODES);
         if (!isset($aPaymentMethodMap[$aMethodDetails['id']])) {
             throw new Exception('Worldline method (' . $aMethodDetails['id'] . ' - ' . $aMethodDetails['label'] . ') could not be added. Matching OXID not found.');
@@ -256,26 +260,46 @@ class FcwlopPaymentHelper
 
         $sQuery = "
             INSERT INTO oxpayments(OXID,OXACTIVE,OXDESC,OXADDSUM,OXADDSUMTYPE,OXFROMBONI,OXFROMAMOUNT,OXTOAMOUNT,OXVALDESC,OXCHECKED,OXDESC_1,OXVALDESC_1,OXDESC_2,OXVALDESC_2,OXDESC_3,OXVALDESC_3,OXLONGDESC,OXLONGDESC_1,OXLONGDESC_2,OXLONGDESC_3,OXSORT, FCWLOPISWORLDLINE, FCWLOPEXTID, FCWLOPEXTTYPE, FCWLOPEXTGROUPTYPE, FCWLOPEXTLOGO) 
-            VALUES ('{$sOxid}', '{$aMethodDetails['active']}', '{$aMethodDetails['label']}', 0, 'abs', 0, 0, 1000000, '', 0, '{$aMethodDetails['label']}', '', '', '', '', '', '', '', '', '', 0, 1, {$aMethodDetails['id']}, '{$aMethodDetails['type']}', '{$aMethodDetails['groupType']}', '{$aMethodDetails['logoLink']}');
+            VALUES (:sOxid, :iActive, :sLabel, 0, 'abs', 0, 0, 1000000, '', 0, :sLabel, '', '', '', '', '', '', '', '', '', 0, 1, :sId, :sType, :sGroupType, :sLogoLink);
         ";
+
+        $aParams = [
+            'sOxid' => $sOxid,
+            'iActive' => $aMethodDetails['active'],
+            'sLabel' => $aMethodDetails['label'],
+            'sId' => $aMethodDetails['id'],
+            'sType' => $aMethodDetails['type'],
+            'sGroupType' => $aMethodDetails['groupType'],
+            'sLogoLink' => $aMethodDetails['logoLink'],
+        ];
 
         $blNewlyAdded = FcwlopDatabaseHelper::insertRowIfNotExists(
             'oxpayments',
             array('OXID' => $sOxid),
-            $sQuery
+            $sQuery,
+            $aParams
         );
 
         if ($blNewlyAdded === true) {
             //Insert basic payment method configuration
             foreach (FcwlopDatabaseHelper::$aGroupsToAdd as $sGroupId) {
-                DatabaseProvider::getDb()->Execute("INSERT INTO oxobject2group(OXID,OXSHOPID,OXOBJECTID,OXGROUPSID) values (REPLACE(UUID(),'-',''), :shopid, :paymentid, :groupid);", [
-                    ':shopid' => Registry::getConfig()->getShopId(),
-                    ':paymentid' => $sOxid,
-                    ':groupid' => $sGroupId,
+                $sQuery = "INSERT INTO oxobject2group(OXID,OXSHOPID,OXOBJECTID,OXGROUPSID) values (REPLACE(UUID(),'-',''), :iShopid, :sPaymentid, :sGroupid);";
+                $oDb->executeStatement($sQuery, [
+                    'iShopid' => Registry::getConfig()->getShopId(),
+                    'sPaymentid' => $sOxid,
+                    'sGroupid' => $sGroupId,
                 ]);
             }
         }
-        FcwlopDatabaseHelper::insertRowIfNotExists('oxobject2payment', array('OXPAYMENTID' => $sOxid, 'OXTYPE' => 'oxdelset'), "INSERT INTO oxobject2payment(OXID,OXPAYMENTID,OXOBJECTID,OXTYPE) values (REPLACE(UUID(),'-',''), :paymentid, 'oxidstandard', 'oxdelset');", [':paymentid' => $sOxid]);
+
+        $sQuery = "INSERT INTO oxobject2payment(OXID,OXPAYMENTID,OXOBJECTID,OXTYPE) values (REPLACE(UUID(),'-',''), :sPaymentid, 'oxidstandard', 'oxdelset');";
+
+        FcwlopDatabaseHelper::insertRowIfNotExists(
+            'oxobject2payment',
+            array('OXPAYMENTID' => $sOxid, 'OXTYPE' => 'oxdelset'),
+            $sQuery,
+            ['sPaymentid' => $sOxid]
+        );
     }
 
     /**
@@ -723,12 +747,18 @@ class FcwlopPaymentHelper
      */
     protected function fcwlopGetLatestTransactionStep($sTransactionId)
     {
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
+
         $iStep = 0;
 
         $sQuery = "SELECT MAX(FCWLOP_TXSTEP) as last_step
                         FROM fcwloptransactionlog 
                         WHERE FCWLOP_TXID = :sTransactionId";
-        $sResult = DatabaseProvider::getDb()->getOne($sQuery,[':sTransactionId' => $sTransactionId]);
+
+        $sResult = $oDb->fetchOne($sQuery, [
+            'sTransactionId' => $sTransactionId
+        ]);
+
         if (!empty($sResult)) {
             $iStep = (int) $sResult;
         }
@@ -750,21 +780,20 @@ class FcwlopPaymentHelper
         $sQuery = "SELECT *
                     FROM fcwloptransactionlog 
                     WHERE FCWLOP_TXID = :sTransactionId";
-        $aParams = [':sTransactionId' => $sTransactionId];
+        $aParams = ['sTransactionId' => $sTransactionId];
 
         if ($iStep >= 0) {
             $sQuery .=  " AND FCWLOP_STEP = :iStep";
-            $aParams[':iStep'] = $iStep;
+            $aParams['iStep'] = $iStep;
         }
 
         if (!empty($sStatus)) {
             $sQuery .=  " AND FCWLOP_STATUS = :sStatus";
-            $aParams[':sStatus'] = $sStatus;
+            $aParams['sStatus'] = $sStatus;
         }
 
-        $oDb = DatabaseProvider::getDb();
-        $oDb->setFetchMode(DatabaseProvider::FETCH_MODE_ASSOC);
-        $aResult = $oDb->getRow($sQuery, $aParams);
+        $oDb = FcwlopDatabaseHelper::getPdoDb();
+        $aResult = $oDb->fetchAssociative($sQuery, $aParams);
         if (!empty($sResult)) {
             return [];
         }

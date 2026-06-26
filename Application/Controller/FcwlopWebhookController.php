@@ -136,7 +136,12 @@ class FcwlopWebhookController extends FrontendController
         $oOrder = FcwlopOrderHelper::getInstance()->fcwlopLoadOrderByTransactionId($aWorldlineTxId[0]);
 
         if (!$oOrder) {
-            throw new \Exception('Order for txid "' . $aWorldlineTxId[0] . '" not found.');
+            // Retry in case the TxStatus arrived before the shop updated the order
+            sleep(5);
+            $oOrder = FcwlopOrderHelper::getInstance()->fcwlopLoadOrderByTransactionId($aWorldlineTxId[0]);
+            if (!$oOrder) {
+                throw new \Exception('Order for txid "' . $aWorldlineTxId[0] . '" not found.');
+            }
         }
 
         return $oOrder;

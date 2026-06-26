@@ -39,7 +39,6 @@ class FcwlopThankYouController extends FcwlopThankYouController_parent
      */
     public function fcwlopIsPendingCheckout()
     {
-        Registry::getLogger()->error(Registry::getRequest()->getRequestEscapedParameter('pendingCheckout'));
         return Registry::getRequest()->getRequestEscapedParameter('pendingCheckout') == 1;
     }
 }

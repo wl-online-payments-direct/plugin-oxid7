@@ -6,8 +6,11 @@
 
 namespace FC\FCWLOP\Application\Helper;
 
+use Doctrine\DBAL\Connection;
 use OxidEsales\Eshop\Core\DatabaseProvider;
 use OxidEsales\Eshop\Core\Registry;
+use OxidEsales\EshopCommunity\Internal\Container\ContainerFactory;
+use OxidEsales\EshopCommunity\Internal\Framework\Database\QueryBuilderFactoryInterface;
 
 class FcwlopDatabaseHelper
 {
@@ -61,9 +64,13 @@ class FcwlopDatabaseHelper
      */
     public static function addTableIfNotExists($sTableName, $sQuery)
     {
-        $aTables = DatabaseProvider::getDb()->getAll("SHOW TABLES LIKE ?", array($sTableName));
-        if (!$aTables || count($aTables) == 0) {
-            DatabaseProvider::getDb()->Execute($sQuery);
+        $oDb = self::getPdoDb();
+        $aTables = $oDb->fetchOne("SHOW TABLES LIKE :sTableName", [
+            'sTableName' => $sTableName
+        ]);
+
+        if ($aTables === false) {
+            $oDb->executeStatement($sQuery);
             return true;
         }
         return false;
@@ -81,18 +88,23 @@ class FcwlopDatabaseHelper
      */
     public static function addColumnIfNotExists($sTableName, $sColumnName, $sQuery, $aNewColumnDataQueries = array())
     {
-        $aColumns = DatabaseProvider::getDb()->getAll("SHOW COLUMNS FROM {$sTableName} LIKE ?", array($sColumnName));
-        if (empty($aColumns)) {
+        $oDb = self::getPdoDb();
+        $aColumns = $oDb->fetchOne("SHOW COLUMNS FROM {$sTableName} LIKE :sColumnName", [
+            'sColumnName' => $sColumnName,
+        ]);
+
+        if ($aColumns === false) {
             try {
-                DatabaseProvider::getDb()->Execute($sQuery);
+                $oDb->executeStatement($sQuery);
                 foreach ($aNewColumnDataQueries as $sQuery) {
-                    DatabaseProvider::getDb()->Execute($sQuery);
+                    $oDb->executeStatement($sQuery);
                 }
                 return true;
             } catch (\Exception $e) {
                 // do nothing as of yet
             }
         }
+
         return false;
     }
 
@@ -108,13 +120,14 @@ class FcwlopDatabaseHelper
      */
     public static function insertRowIfNotExists($sTableName, $aKeyValue, $sQuery, $aParams = [])
     {
+        $oDb = self::getPdoDb();
         $sCheckQuery = "SELECT * FROM {$sTableName} WHERE 1";
-        foreach ($aKeyValue as $key => $value) {
-            $sCheckQuery .= " AND $key = '$value'";
+        foreach (array_keys($aKeyValue) as $key) {
+            $sCheckQuery .= " AND `{$key}` = :{$key}";
         }
 
-        if (!DatabaseProvider::getDb()->getOne($sCheckQuery)) { // row not existing yet?
-            DatabaseProvider::getDb()->Execute($sQuery, $aParams);
+        if ($oDb->fetchOne($sCheckQuery, $aKeyValue) === false) {
+            $oDb->executeStatement($sQuery, $aParams);
             return true;
         }
         return false;
@@ -132,21 +145,22 @@ class FcwlopDatabaseHelper
             return; // Don't deactivate payment methods when changing config in admin ( this triggers module deactivation )
         }
 
-        DatabaseProvider::getDb()->Execute("UPDATE oxpayments SET oxactive = 0 WHERE FCWLOPISWORLDLINE = 1");
+        $oDb = self::getPdoDb();
+        try {
+            $oDb->executeStatement("UPDATE oxpayments SET oxactive = 0 WHERE FCWLOPISWORLDLINE = 1");
+        } catch (\Exception $e) {
+            // do nothing as of yet
+        }
     }
 
     /**
-     * Returns parameter-string for prepared mysql statement
-     *
-     * @param array $aValues
-     * @return string
+     * @return Connection
      */
-    public static function getPreparedInStatement($aValues)
+    public static function getPdoDb()
     {
-        $sReturn = '';
-        foreach ($aValues as $sValue) {
-            $sReturn .= '?,';
-        }
-        return '('.rtrim($sReturn, ',').')';
+        $oContainer = ContainerFactory::getInstance()->getContainer();
+        $oFactory = $oContainer->get(QueryBuilderFactoryInterface::class);
+
+        return  $oFactory->create()->getConnection();
     }
 }

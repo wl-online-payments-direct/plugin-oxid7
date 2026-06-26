@@ -53,6 +53,7 @@ class FcwlopPaymentTransactionHandler extends FcwlopBaseTransactionHandler
                 /** @var PaymentDetailsResponse $oWorldlinePayment */
                 $oWorldlinePayment = $oOrder->fcwlopGetWorldlinePaymentDetails();
                 if ($oWorldlinePayment->getStatus() == 'CAPTURED') {
+                    $oOrder->fcwlopSetFolder('new');
                     $oOrder->fcwlopSetStatus('ok');
                     $oOrder->fcwlopMarkAsPaid();
                     FcwlopOrderHelper::getInstance()->fcwlopMarkOrderAsFullyCaptured($oOrder);
